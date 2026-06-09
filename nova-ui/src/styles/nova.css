@@ -1,0 +1,297 @@
+@import "tailwindcss";
+
+/* ----------------------------------------------------------------------------
+ * Nova UI — design tokens
+ *
+ * CSS-first theming (Tailwind v4). All colors are OKLCH for perceptually
+ * uniform scales and wide-gamut displays. Semantic tokens flip in `.dark`,
+ * and `@theme inline` maps them to Tailwind utilities (bg-surface, etc.).
+ * ------------------------------------------------------------------------- */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Neutrals — slightly cool gray ramp */
+  --nova-bg: oklch(98.5% 0.002 247);
+  --nova-surface: oklch(100% 0 0);
+  --nova-surface-2: oklch(96.7% 0.003 247);
+  --nova-border: oklch(90% 0.005 247);
+  --nova-border-strong: oklch(83% 0.008 247);
+  --nova-fg: oklch(21% 0.02 257);
+  --nova-fg-muted: oklch(50% 0.02 257);
+  --nova-fg-subtle: oklch(63% 0.015 257);
+
+  /* Brand — electric indigo/violet */
+  --nova-accent: oklch(54% 0.23 277);
+  --nova-accent-hover: oklch(49% 0.23 277);
+  --nova-accent-fg: oklch(98% 0.01 277);
+  --nova-accent-soft: oklch(94% 0.04 277);
+  --nova-accent-soft-fg: oklch(42% 0.2 277);
+
+  /* Status */
+  --nova-success: oklch(62% 0.17 152);
+  --nova-success-soft: oklch(95% 0.05 152);
+  --nova-success-soft-fg: oklch(40% 0.12 152);
+  --nova-warning: oklch(76% 0.16 75);
+  --nova-warning-soft: oklch(96% 0.06 85);
+  --nova-warning-soft-fg: oklch(45% 0.11 75);
+  --nova-danger: oklch(58% 0.21 25);
+  --nova-danger-hover: oklch(52% 0.21 25);
+  --nova-danger-fg: oklch(98% 0.01 25);
+  --nova-danger-soft: oklch(95% 0.035 25);
+  --nova-danger-soft-fg: oklch(45% 0.18 25);
+
+  /* Misc */
+  --nova-ring: oklch(54% 0.23 277 / 0.5);
+  --nova-overlay: oklch(15% 0.02 257 / 0.45);
+  --nova-shadow-color: oklch(20% 0.02 257);
+
+  --nova-radius: 0.625rem;
+}
+
+.dark {
+  --nova-bg: oklch(16.5% 0.015 257);
+  --nova-surface: oklch(20% 0.016 257);
+  --nova-surface-2: oklch(24% 0.018 257);
+  --nova-border: oklch(30% 0.02 257);
+  --nova-border-strong: oklch(38% 0.022 257);
+  --nova-fg: oklch(95% 0.008 247);
+  --nova-fg-muted: oklch(72% 0.015 257);
+  --nova-fg-subtle: oklch(58% 0.015 257);
+
+  --nova-accent: oklch(65% 0.2 277);
+  --nova-accent-hover: oklch(70% 0.18 277);
+  --nova-accent-fg: oklch(15% 0.03 277);
+  --nova-accent-soft: oklch(30% 0.08 277);
+  --nova-accent-soft-fg: oklch(82% 0.1 277);
+
+  --nova-success: oklch(70% 0.16 152);
+  --nova-success-soft: oklch(28% 0.05 152);
+  --nova-success-soft-fg: oklch(82% 0.12 152);
+  --nova-warning: oklch(80% 0.15 80);
+  --nova-warning-soft: oklch(30% 0.05 80);
+  --nova-warning-soft-fg: oklch(85% 0.11 85);
+  --nova-danger: oklch(64% 0.2 25);
+  --nova-danger-hover: oklch(70% 0.19 25);
+  --nova-danger-fg: oklch(14% 0.02 25);
+  --nova-danger-soft: oklch(28% 0.06 25);
+  --nova-danger-soft-fg: oklch(82% 0.1 25);
+
+  --nova-ring: oklch(65% 0.2 277 / 0.55);
+  --nova-overlay: oklch(8% 0.01 257 / 0.6);
+  --nova-shadow-color: oklch(5% 0.01 257);
+}
+
+@theme inline {
+  --color-background: var(--nova-bg);
+  --color-surface: var(--nova-surface);
+  --color-surface-2: var(--nova-surface-2);
+  --color-border: var(--nova-border);
+  --color-border-strong: var(--nova-border-strong);
+  --color-foreground: var(--nova-fg);
+  --color-muted: var(--nova-fg-muted);
+  --color-subtle: var(--nova-fg-subtle);
+
+  --color-accent: var(--nova-accent);
+  --color-accent-hover: var(--nova-accent-hover);
+  --color-accent-foreground: var(--nova-accent-fg);
+  --color-accent-soft: var(--nova-accent-soft);
+  --color-accent-soft-foreground: var(--nova-accent-soft-fg);
+
+  --color-success: var(--nova-success);
+  --color-success-soft: var(--nova-success-soft);
+  --color-success-soft-foreground: var(--nova-success-soft-fg);
+  --color-warning: var(--nova-warning);
+  --color-warning-soft: var(--nova-warning-soft);
+  --color-warning-soft-foreground: var(--nova-warning-soft-fg);
+  --color-danger: var(--nova-danger);
+  --color-danger-hover: var(--nova-danger-hover);
+  --color-danger-foreground: var(--nova-danger-fg);
+  --color-danger-soft: var(--nova-danger-soft);
+  --color-danger-soft-foreground: var(--nova-danger-soft-fg);
+
+  --color-ring: var(--nova-ring);
+  --color-overlay: var(--nova-overlay);
+
+  --radius-nova: var(--nova-radius);
+  --radius-nova-sm: calc(var(--nova-radius) - 0.25rem);
+  --radius-nova-lg: calc(var(--nova-radius) + 0.375rem);
+
+  --shadow-nova-sm: 0 1px 2px 0 oklch(from var(--nova-shadow-color) l c h / 0.06);
+  --shadow-nova: 0 1px 3px 0 oklch(from var(--nova-shadow-color) l c h / 0.09),
+    0 1px 2px -1px oklch(from var(--nova-shadow-color) l c h / 0.09);
+  --shadow-nova-lg: 0 10px 24px -6px oklch(from var(--nova-shadow-color) l c h / 0.16),
+    0 4px 10px -6px oklch(from var(--nova-shadow-color) l c h / 0.1);
+
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --animate-nova-spin: nova-spin 0.7s linear infinite;
+  --animate-nova-pulse: nova-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-nova-progress: nova-progress 1.4s ease-in-out infinite;
+
+  --ease-nova: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes nova-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes nova-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes nova-progress {
+  0% {
+    translate: -100% 0;
+  }
+  100% {
+    translate: 250% 0;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--nova-border);
+  }
+
+  body {
+    background-color: var(--nova-bg);
+    color: var(--nova-fg);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Height animations on <details>/popovers can interpolate to `auto`
+     where supported — progressive enhancement, no JS measuring. */
+  :root {
+    interpolate-size: allow-keywords;
+  }
+}
+
+@layer components {
+  /* --------------------------------------------------------------------
+   * Top-layer entry/exit animations: native <dialog> and [popover] are
+   * display:none when closed, so we animate with @starting-style plus
+   * discrete transitions of `display` and `overlay`.
+   * ------------------------------------------------------------------ */
+
+  .nova-dialog {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 0.5rem;
+    transition:
+      opacity 0.2s var(--ease-nova),
+      scale 0.2s var(--ease-nova),
+      translate 0.2s var(--ease-nova),
+      display 0.2s allow-discrete,
+      overlay 0.2s allow-discrete;
+  }
+
+  .nova-dialog[open] {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+
+    @starting-style {
+      opacity: 0;
+      scale: 0.96;
+      translate: 0 0.5rem;
+    }
+  }
+
+  .nova-dialog::backdrop {
+    background-color: var(--nova-overlay);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition:
+      opacity 0.2s ease,
+      display 0.2s allow-discrete,
+      overlay 0.2s allow-discrete;
+  }
+
+  .nova-dialog[open]::backdrop {
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
+  /* Sheet variant slides in from the inline-end edge. */
+  .nova-sheet {
+    opacity: 0;
+    translate: 100% 0;
+    transition:
+      opacity 0.3s var(--ease-nova),
+      translate 0.3s var(--ease-nova),
+      display 0.3s allow-discrete,
+      overlay 0.3s allow-discrete;
+  }
+
+  .nova-sheet[open] {
+    opacity: 1;
+    translate: 0 0;
+
+    @starting-style {
+      opacity: 0;
+      translate: 100% 0;
+    }
+  }
+
+  .nova-popover {
+    opacity: 0;
+    scale: 0.97;
+    transition:
+      opacity 0.15s var(--ease-nova),
+      scale 0.15s var(--ease-nova),
+      display 0.15s allow-discrete,
+      overlay 0.15s allow-discrete;
+  }
+
+  .nova-popover:popover-open {
+    opacity: 1;
+    scale: 1;
+
+    @starting-style {
+      opacity: 0;
+      scale: 0.97;
+    }
+  }
+
+  /* Accordion content height animates to `auto` via interpolate-size. */
+  .nova-details::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size 0.25s var(--ease-nova),
+      content-visibility 0.25s allow-discrete;
+  }
+
+  .nova-details[open]::details-content {
+    block-size: auto;
+  }
+
+  .nova-details > summary {
+    list-style: none;
+  }
+
+  .nova-details > summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: reduce) {
+    .nova-dialog,
+    .nova-dialog::backdrop,
+    .nova-sheet,
+    .nova-popover,
+    .nova-details::details-content {
+      transition-duration: 0.01ms;
+    }
+  }
+}

@@ -131,4 +131,24 @@ export type { PinInputProps } from "./components/pin-input";
 export { FileUpload } from "./components/file-upload";
 export type { FileUploadProps } from "./components/file-upload";
 
+export { CommandPalette, CommandProvider, useCommand, useRegisterCommands } from "./components/command-palette";
+export type { CommandAction } from "./components/command-palette";
+
+// Form engine
+export { createForm } from "./lib/form";
+export type { FormConfig, FormSchema, FormError, FormInstance, FieldBag } from "./lib/form";
+export { Form, FormField } from "./components/form";
+export type { FormProps, FormFieldProps } from "./components/form";
+
+// Motion
+export { Presence, usePresence } from "./components/presence";
+
+// Alerts
+export { Alert, AlertDialog } from "./components/alert";
+export type { AlertProps, AlertDialogProps } from "./components/alert";
+
+// Sidebar
+export { SidebarProvider, Sidebar, SidebarGroup, SidebarItem, SidebarToggle, useSidebar } from "./components/sidebar";
+export type { SidebarProps, SidebarGroupProps, SidebarItemProps } from "./components/sidebar";
+
 import "./styles/nova.css";

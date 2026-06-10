@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { cn } from "@/lib/cn";
 
 // ---------------------------------------------------------------------------
@@ -329,10 +329,9 @@ export function Heatmap({
 
         {/* Data rows */}
         {yLabels.map((yl) => (
-          <>
+          <React.Fragment key={yl}>
             {/* Row label */}
             <div
-              key={`label-${yl}`}
               className="flex items-center justify-end pr-2 text-xs text-subtle"
               style={{ height: cellSize }}
             >
@@ -373,7 +372,7 @@ export function Heatmap({
                 </div>
               );
             })}
-          </>
+          </React.Fragment>
         ))}
       </div>
     </div>

@@ -32,8 +32,8 @@ export function BarChart<T extends Record<string, unknown>>({
   animate = true,
   className,
 }: BarChartProps<T>) {
-  const { ref: measureRef, width } = useMeasure<HTMLDivElement>();
-  const { ref: inViewRef, inView } = useInView<HTMLDivElement>();
+  const { ref, width } = useMeasure<HTMLDivElement>();
+  const inView = useInView(ref);
   const [hover, setHover] = useState<number | null>(null);
 
   const maxValue = useMemo(() => {
@@ -55,13 +55,8 @@ export function BarChart<T extends Record<string, unknown>>({
   const xLabelEvery = Math.max(1, Math.ceil(data.length / Math.max(1, Math.floor(innerW / 64))));
   const revealed = !animate || inView;
 
-  const setRef = (el: HTMLDivElement | null) => {
-    (measureRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-    (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-  };
-
   return (
-    <div ref={setRef} className={cn("w-full", className)}>
+    <div ref={ref} className={cn("w-full", className)}>
       {width > 0 && (
         <svg
           width={width}

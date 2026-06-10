@@ -8,6 +8,7 @@ import {
 } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { showPopover, hidePopover } from "@/lib/use-anchor-position";
 
 export interface MultiSelectOption {
   value: string;
@@ -59,27 +60,17 @@ export function MultiSelect({
   const openDropdown = () => {
     if (disabled) return;
     setOpen(true);
-    if (popoverRef.current && typeof popoverRef.current.showPopover === "function") {
-      try {
-        popoverRef.current.showPopover();
-      } catch {
-        /* already open */
-      }
+    showPopover(popoverRef.current);
+    // Focus search input on desktop only — on touch, keyboard would occlude the list
+    if (window.matchMedia("(pointer: fine)").matches) {
+      requestAnimationFrame(() => searchRef.current?.focus());
     }
-    // Focus search input after opening
-    requestAnimationFrame(() => searchRef.current?.focus());
   };
 
   const closeDropdown = () => {
     setOpen(false);
     setQuery("");
-    if (popoverRef.current && typeof popoverRef.current.hidePopover === "function") {
-      try {
-        popoverRef.current.hidePopover();
-      } catch {
-        /* already closed */
-      }
-    }
+    hidePopover(popoverRef.current);
   };
 
   const toggle = (optValue: string) => {

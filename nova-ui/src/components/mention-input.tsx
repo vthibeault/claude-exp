@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { cn } from "@/lib/cn";
+import { showPopover, hidePopover } from "@/lib/use-anchor-position";
 
 export interface MentionOption {
   id: string;
@@ -74,25 +75,13 @@ export function MentionInput({
     setOpen(false);
     setOptions([]);
     setActiveIndex(0);
-    if (popoverRef.current && typeof popoverRef.current.hidePopover === "function") {
-      try {
-        popoverRef.current.hidePopover();
-      } catch {
-        /* already hidden */
-      }
-    }
+    hidePopover(popoverRef.current);
   }, []);
 
   const openSuggestions = useCallback((pos: PopoverPos) => {
     setPopoverPos(pos);
     setOpen(true);
-    if (popoverRef.current && typeof popoverRef.current.showPopover === "function") {
-      try {
-        popoverRef.current.showPopover();
-      } catch {
-        /* already open */
-      }
-    }
+    showPopover(popoverRef.current);
   }, []);
 
   /** Find the trigger query from the current caret position. Returns null if not in a mention. */

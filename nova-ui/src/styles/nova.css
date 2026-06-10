@@ -195,7 +195,8 @@
 }
 
 @layer base {
-  /* Eliminate the 300ms tap delay on all interactive elements */
+  /* Eliminate the 300ms tap delay on all interactive elements.
+     touch-action:manipulation disables double-tap-to-zoom, removing the delay. */
   button, [role="button"], a, input, select, textarea, label, summary {
     touch-action: manipulation;
   }
@@ -206,16 +207,25 @@
     -webkit-user-select: none;
   }
 
-  /* Ensure minimum touch target size (44×44px recommended by WCAG) */
-  @media (pointer: coarse) {
-    button, [role="button"] {
-      min-height: 44px;
-      min-width: 44px;
+  /* ── Popover API fallback (iOS < 17, older Android Chrome) ──────────────
+   * In browsers that don't support the Popover API, [popover] elements are
+   * rendered as normal divs — always visible, always focusable, overlapping
+   * the page. That causes every dropdown/tooltip/combobox to be permanently
+   * visible and their inputs to be focusable, making the keyboard appear on
+   * any nearby tap.
+   *
+   * Fallback: hide [popover] with CSS; our showPopover/hidePopover helpers
+   * also set data-popover-open to toggle visibility in JS.
+   * ────────────────────────────────────────────────────────────────────── */
+  @supports not (selector(:popover-open)) {
+    [popover] {
+      display: none !important;
+      position: fixed;
+      inset: auto;
+      margin: 0;
     }
-    /* Inline/compact buttons (icon-only, badges) can be smaller but need a tap area */
-    button.nova-compact, [data-size="sm"], [data-size="icon"] {
-      min-height: 36px;
-      min-width: 36px;
+    [popover][data-popover-open] {
+      display: block !important;
     }
   }
 }

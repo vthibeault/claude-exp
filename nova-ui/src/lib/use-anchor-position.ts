@@ -82,23 +82,34 @@ export function useAnchorPosition<A extends HTMLElement, F extends HTMLElement>(
   return { anchorRef, floatingRef, update };
 }
 
-/** Feature-detected popover helpers — no-ops in environments without the Popover API (e.g. jsdom). */
+/** True when the browser natively supports the Popover API. */
+const POPOVER_SUPPORTED =
+  typeof HTMLElement !== "undefined" && "showPopover" in HTMLElement.prototype;
+
+/**
+ * Show a [popover] element.
+ * Uses the native Popover API where available; falls back to a data-attribute
+ * toggle for iOS < 17 / older browsers (paired with the CSS in nova.css).
+ */
 export function showPopover(el: HTMLElement | null) {
-  if (el && typeof el.showPopover === "function" && el.isConnected) {
-    try {
-      el.showPopover();
-    } catch {
-      /* already open */
-    }
+  if (!el || !el.isConnected) return;
+  if (POPOVER_SUPPORTED) {
+    try { el.showPopover(); } catch { /* already open */ }
+  } else {
+    el.dataset.popoverOpen = "";
+    el.style.zIndex = "9999";
   }
 }
 
+/**
+ * Hide a [popover] element.
+ */
 export function hidePopover(el: HTMLElement | null) {
-  if (el && typeof el.hidePopover === "function" && el.isConnected) {
-    try {
-      el.hidePopover();
-    } catch {
-      /* already hidden */
-    }
+  if (!el || !el.isConnected) return;
+  if (POPOVER_SUPPORTED) {
+    try { el.hidePopover(); } catch { /* already hidden */ }
+  } else {
+    delete el.dataset.popoverOpen;
+    el.style.zIndex = "";
   }
 }

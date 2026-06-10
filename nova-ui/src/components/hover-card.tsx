@@ -122,13 +122,18 @@ export function HoverCardTrigger({ children }: { children: React.ReactElement })
   return cloneElement(children as React.ReactElement<Record<string, unknown>>, {
     ref: anchorRef,
     "aria-describedby": cardId,
-    onMouseEnter: (e: MouseEvent) => {
-      (props.onMouseEnter as ((e: MouseEvent) => void) | undefined)?.(e);
-      scheduleOpen();
+    onPointerEnter: (e: PointerEvent) => {
+      (props.onPointerEnter as ((e: PointerEvent) => void) | undefined)?.(e);
+      if (e.pointerType !== "touch") scheduleOpen();
     },
-    onMouseLeave: (e: MouseEvent) => {
-      (props.onMouseLeave as ((e: MouseEvent) => void) | undefined)?.(e);
-      scheduleClose();
+    onPointerLeave: (e: PointerEvent) => {
+      (props.onPointerLeave as ((e: PointerEvent) => void) | undefined)?.(e);
+      if (e.pointerType !== "touch") scheduleClose();
+    },
+    onClick: (e: MouseEvent) => {
+      (props.onClick as ((e: MouseEvent) => void) | undefined)?.(e);
+      // On touch devices, toggle the card on tap
+      scheduleOpen();
     },
   });
 }
@@ -157,8 +162,8 @@ export function HoverCardContent({
       popover="manual"
       role="dialog"
       aria-hidden={!open}
-      onMouseEnter={cancelClose}
-      onMouseLeave={scheduleClose}
+      onPointerEnter={(e: React.PointerEvent) => { if (e.pointerType !== "touch") cancelClose(); }}
+      onPointerLeave={(e: React.PointerEvent) => { if (e.pointerType !== "touch") scheduleClose(); }}
       className={cn(
         "nova-popover fixed inset-auto m-0",
         "bg-surface border border-border rounded-nova-lg shadow-nova-lg p-4 w-64 text-sm",

@@ -909,42 +909,80 @@ interface LabelGroupRowProps {
   onLabelChange: (label: string) => void;
 }
 
+function EditableLabel({
+  value,
+  onCommit,
+  className,
+}: {
+  value: string;
+  onCommit: (v: string) => void;
+  className?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const spanRef = useRef<HTMLSpanElement>(null);
+
+  const startEdit = () => {
+    setEditing(true);
+    requestAnimationFrame(() => {
+      const el = spanRef.current;
+      if (!el) return;
+      el.focus();
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    });
+  };
+
+  const commit = () => {
+    setEditing(false);
+    const val = (spanRef.current?.textContent ?? "").trim();
+    if (val && val !== value) onCommit(val);
+    else if (spanRef.current) spanRef.current.textContent = value;
+  };
+
+  return (
+    <span
+      ref={spanRef}
+      contentEditable={editing || undefined}
+      suppressContentEditableWarning
+      onDoubleClick={startEdit}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { e.preventDefault(); commit(); }
+        if (e.key === "Escape") { setEditing(false); if (spanRef.current) spanRef.current.textContent = value; }
+      }}
+      title="Double-click to rename"
+      className={cn("outline-none rounded px-0.5 cursor-default select-none", editing && "cursor-text select-text bg-surface ring-1 ring-ring", className)}
+    >
+      {value}
+    </span>
+  );
+}
+
 function LabelGroupRow({ group, height, collapsed, onToggle, onLabelChange }: LabelGroupRowProps) {
   return (
     <div
-      className="flex items-center gap-1 px-2 bg-surface-2/60 border-b border-border group/row select-none"
+      className="flex items-center gap-1 px-2 bg-surface-2/60 border-b border-border group/row"
       style={{ height }}
     >
       <button
         onClick={onToggle}
-        className="shrink-0 text-subtle hover:text-foreground transition-colors"
+        className="shrink-0 text-subtle hover:text-foreground transition-colors p-1"
         aria-label={collapsed ? "Expand group" : "Collapse group"}
       >
         {collapsed ? <ChevronRight className="size-3.5" /> : <ChevronDown className="size-3.5" />}
       </button>
       {group.color && (
-        <div
-          className="shrink-0 size-2.5 rounded-sm"
-          style={{ background: group.color }}
-        />
+        <div className="shrink-0 size-2.5 rounded-sm" style={{ background: group.color }} />
       )}
-      <span
-        contentEditable
-        suppressContentEditableWarning
-        className="flex-1 text-xs font-semibold text-foreground truncate outline-none rounded px-0.5 focus:bg-surface focus:ring-1 focus:ring-ring"
-        onBlur={(e) => {
-          const val = (e.currentTarget.textContent ?? "").trim();
-          if (val && val !== group.label) onLabelChange(val);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            e.currentTarget.blur();
-          }
-        }}
-      >
-        {group.label}
-      </span>
+      <EditableLabel
+        value={group.label}
+        onCommit={onLabelChange}
+        className="flex-1 text-xs font-semibold text-foreground truncate"
+      />
     </div>
   );
 }
@@ -963,26 +1001,14 @@ function LabelTaskRow({ task, height, indent, onLabelChange, onDelete }: LabelTa
       className="flex items-center gap-1 border-b border-border group/row"
       style={{ height, paddingLeft: indent ? 28 : 8, paddingRight: 4 }}
     >
-      <span
-        contentEditable
-        suppressContentEditableWarning
-        className="flex-1 text-xs text-foreground truncate outline-none rounded px-0.5 focus:bg-surface focus:ring-1 focus:ring-ring"
-        onBlur={(e) => {
-          const val = (e.currentTarget.textContent ?? "").trim();
-          if (val && val !== task.label) onLabelChange(val);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            e.currentTarget.blur();
-          }
-        }}
-      >
-        {task.label}
-      </span>
+      <EditableLabel
+        value={task.label}
+        onCommit={onLabelChange}
+        className="flex-1 text-xs text-foreground truncate"
+      />
       <button
         onClick={onDelete}
-        className="shrink-0 opacity-0 group-hover/row:opacity-100 text-subtle hover:text-danger transition-opacity transition-colors p-0.5 rounded"
+        className="shrink-0 opacity-0 group-hover/row:opacity-100 focus:opacity-100 text-subtle hover:text-danger transition-opacity p-1 rounded touch-manipulation"
         aria-label="Delete task"
       >
         <Trash2 className="size-3" />

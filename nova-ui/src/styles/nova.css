@@ -194,6 +194,32 @@
   }
 }
 
+@layer base {
+  /* Eliminate the 300ms tap delay on all interactive elements */
+  button, [role="button"], a, input, select, textarea, label, summary {
+    touch-action: manipulation;
+  }
+
+  /* Prevent text selection during drag operations */
+  [data-dragging] {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Ensure minimum touch target size (44×44px recommended by WCAG) */
+  @media (pointer: coarse) {
+    button, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    /* Inline/compact buttons (icon-only, badges) can be smaller but need a tap area */
+    button.nova-compact, [data-size="sm"], [data-size="icon"] {
+      min-height: 36px;
+      min-width: 36px;
+    }
+  }
+}
+
 @layer components {
   /* --------------------------------------------------------------------
    * Top-layer entry/exit animations: native <dialog> and [popover] are

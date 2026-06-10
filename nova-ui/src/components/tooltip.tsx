@@ -57,12 +57,14 @@ export function Tooltip({ content, side = "top", delay = 250, className, childre
   const trigger = cloneElement(children, {
     ref: anchorRef,
     "aria-describedby": open ? id : undefined,
-    onMouseEnter: (e: MouseEvent) => {
-      (children.props.onMouseEnter as ((e: MouseEvent) => void) | undefined)?.(e);
+    onPointerEnter: (e: PointerEvent) => {
+      (children.props.onPointerEnter as ((e: PointerEvent) => void) | undefined)?.(e);
+      if (e.pointerType === "touch") return; // touch users see content directly — no tooltip needed
       show(delay);
     },
-    onMouseLeave: (e: MouseEvent) => {
-      (children.props.onMouseLeave as ((e: MouseEvent) => void) | undefined)?.(e);
+    onPointerLeave: (e: PointerEvent) => {
+      (children.props.onPointerLeave as ((e: PointerEvent) => void) | undefined)?.(e);
+      if (e.pointerType === "touch") return;
       hide();
     },
     onFocus: (e: FocusEvent) => {

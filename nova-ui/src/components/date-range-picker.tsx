@@ -306,8 +306,8 @@ function CalendarGrid({
                         setCursor(d);
                         onDateSelect(d);
                       }}
-                      onMouseEnter={() => onDateHover(d)}
-                      onMouseLeave={() => onDateHover(null)}
+                      onPointerEnter={(e) => { if (e.pointerType !== "touch") onDateHover(d); }}
+                      onPointerLeave={(e) => { if (e.pointerType !== "touch") onDateHover(null); }}
                       onFocus={() => onDateHover(d)}
                       onBlur={() => onDateHover(null)}
                       onKeyDown={(e) => onKeyDown(e, d)}

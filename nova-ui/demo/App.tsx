@@ -79,6 +79,13 @@ import {
   Tree,
   useToast,
   VirtualTable,
+  // New charts
+  ScatterChart,
+  RadarChart,
+  FunnelChart,
+  BarChart,
+  // Gantt
+  GanttChart,
 } from "../src";
 
 function toggleTheme() {
@@ -228,6 +235,49 @@ const mentionOptions = [
   { id: "chloe", label: "Chloé Gagnon",   sublabel: "@chloe" },
   { id: "david", label: "David Roy",      sublabel: "@david" },
 ];
+
+// ── Gantt demo data ───────────────────────────────────────────────────────────
+
+const ganttGroups = [
+  { id: "design",  label: "Design",      color: "oklch(0.65 0.18 262)" },
+  { id: "dev",     label: "Engineering", color: "oklch(0.65 0.18 145)" },
+  { id: "launch",  label: "Launch",      color: "oklch(0.65 0.18 28)" },
+];
+
+const d = (offset: number) => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() + offset); return d; };
+
+const ganttTasks = [
+  { id: "t1",  groupId: "design",  label: "Wireframes",        start: d(-14), end: d(-7)  },
+  { id: "t2",  groupId: "design",  label: "Design system",     start: d(-10), end: d(0),  progress: 70 },
+  { id: "t3",  groupId: "design",  label: "Prototype review",  start: d(0),   end: d(0),  milestone: true },
+  { id: "t4",  groupId: "dev",     label: "Auth module",       start: d(-7),  end: d(5),  progress: 45, dependencies: ["t1"] },
+  { id: "t5",  groupId: "dev",     label: "API integration",   start: d(-2),  end: d(10), progress: 20, dependencies: ["t4"] },
+  { id: "t6",  groupId: "dev",     label: "UI components",     start: d(0),   end: d(12), dependencies: ["t2"] },
+  { id: "t7",  groupId: "dev",     label: "Testing",           start: d(10),  end: d(18), dependencies: ["t5", "t6"] },
+  { id: "t8",  groupId: "launch",  label: "Beta release",      start: d(18),  end: d(18), milestone: true, dependencies: ["t7"] },
+  { id: "t9",  groupId: "launch",  label: "Marketing push",    start: d(15),  end: d(22) },
+  { id: "t10", groupId: "launch",  label: "GA launch",         start: d(22),  end: d(22), milestone: true, dependencies: ["t8"] },
+];
+
+function GanttDemo() {
+  return (
+    <section className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight">Gantt Chart</h2>
+        <p className="text-sm text-muted">
+          Drag bars to move · drag edges to resize · click labels to rename · drag the progress fill to update %.
+          Add / delete tasks and groups · collapse groups · switch Day / Week / Month views.
+          Milestones are diamonds · dependency arrows connect tasks.
+        </p>
+      </div>
+      <GanttChart
+        tasks={ganttTasks}
+        groups={ganttGroups}
+        defaultViewMode="week"
+      />
+    </section>
+  );
+}
 
 // ── Showcase ──────────────────────────────────────────────────────────────────
 
@@ -618,19 +668,19 @@ function Showcase() {
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader><CardTitle>Revenue vs costs</CardTitle><CardDescription>Line + area, smoothed</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Revenue vs costs</CardTitle><CardDescription>Line + area, Catmull-Rom smoothed</CardDescription></CardHeader>
             <CardContent>
               <LineChart data={revenue} x="month" series={[{ key: "revenue", label: "Revenue" }, { key: "costs", label: "Costs" }]} area height={220} formatY={(v) => `$${(v / 1000).toFixed(0)}k`} />
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Monthly comparison</CardTitle><CardDescription>Grouped bars</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Monthly comparison</CardTitle><CardDescription>Stacked bars</CardDescription></CardHeader>
             <CardContent>
-              <LineChart data={revenue} x="month" series={[{ key: "revenue", label: "Revenue" }, { key: "costs", label: "Costs" }]} height={220} formatY={(v) => `$${(v / 1000).toFixed(0)}k`} />
+              <BarChart data={revenue} x="month" series={[{ key: "revenue", label: "Revenue" }, { key: "costs", label: "Costs" }]} stacked height={220} formatY={(v) => `$${(v / 1000).toFixed(0)}k`} />
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Traffic sources</CardTitle><CardDescription>Donut with hoverable slices</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Traffic sources</CardTitle><CardDescription>Donut with hoverable slices + sparklines</CardDescription></CardHeader>
             <CardContent className="flex flex-wrap items-center gap-10">
               <DonutChart data={traffic} />
               <div className="flex flex-col gap-3">
@@ -649,9 +699,49 @@ function Showcase() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Activity heatmap</CardTitle><CardDescription>CSS color-mix(in oklch) cells</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Activity heatmap</CardTitle><CardDescription>CSS color-mix(in oklch) — perceptually uniform</CardDescription></CardHeader>
             <CardContent>
               <Heatmap data={heatmapData} cellSize={40} showValues title="Requests / hour" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Scatter / Bubble</CardTitle><CardDescription>Nearest-point hover tooltip; bubble radius from data</CardDescription></CardHeader>
+            <CardContent>
+              <ScatterChart
+                height={220}
+                data={members.map(m => ({ name: m.name, commits: m.commits, score: m.trend.reduce((a,b) => a+b,0), size: m.commits }))}
+                series={[{ key: "commits", yKey: "score", sizeKey: "size", label: "Team members" }]}
+                xLabel="Commits" yLabel="Activity score"
+                formatX={(v) => String(Math.round(v))}
+              />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Radar / Spider</CardTitle><CardDescription>Multi-axis comparison with polygon fill</CardDescription></CardHeader>
+            <CardContent className="flex justify-center">
+              <RadarChart
+                height={220}
+                axes={["Speed", "Reliability", "Security", "Scalability", "DX", "Performance"]}
+                data={{ Speed: 85, Reliability: 92, Security: 78, Scalability: 88, DX: 95, Performance: 90 }}
+                maxValue={100}
+              />
+            </CardContent>
+          </Card>
+          <Card className="lg:col-span-2">
+            <CardHeader><CardTitle>Conversion funnel</CardTitle><CardDescription>Trapezoid stages with drop-off percentages</CardDescription></CardHeader>
+            <CardContent>
+              <FunnelChart
+                height={220}
+                showValues
+                showPercent
+                data={[
+                  { label: "Visitors",   value: 10_000 },
+                  { label: "Leads",      value: 6_200 },
+                  { label: "Trials",     value: 2_400 },
+                  { label: "Customers",  value: 960 },
+                ]}
+                formatValue={(v) => v.toLocaleString()}
+              />
             </CardContent>
           </Card>
         </div>
@@ -955,8 +1045,11 @@ function Showcase() {
         </div>
       </Section>
 
+      {/* Gantt Chart */}
+      <GanttDemo />
+
       <footer className="pb-8 text-center text-sm text-subtle">
-        Nova UI — 72 components · React 19 · Tailwind v4 · OKLCH · Popover API · &lt;dialog&gt; · @starting-style
+        Nova UI — next-gen component library · React 19 · Tailwind v4 · OKLCH · Popover API · &lt;dialog&gt; · @starting-style
       </footer>
     </div>
   );

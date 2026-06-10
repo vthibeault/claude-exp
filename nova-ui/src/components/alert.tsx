@@ -132,6 +132,8 @@ export function AlertDialog({
   onConfirm,
 }: AlertDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const descId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -149,19 +151,17 @@ export function AlertDialog({
     <dialog
       ref={ref}
       onClose={() => onOpenChange(false)}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby={description ? "alert-dialog-desc" : undefined}
-      className={cn(
-        "nova-dialog m-auto w-full max-w-sm rounded-nova-lg border bg-surface p-6 text-foreground shadow-nova-lg backdrop:bg-transparent",
-      )}
+      aria-labelledby={titleId}
+      aria-describedby={description ? descId : undefined}
+      className="nova-dialog m-auto w-full max-w-sm rounded-nova-lg border bg-surface p-6 text-foreground shadow-nova-lg backdrop:bg-transparent"
     >
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <h2 id="alert-dialog-title" className="text-base font-semibold leading-none tracking-tight">
+          <h2 id={titleId} className="text-base font-semibold leading-none tracking-tight">
             {title}
           </h2>
           {description && (
-            <p id="alert-dialog-desc" className="text-sm text-muted">
+            <p id={descId} className="text-sm text-muted">
               {description}
             </p>
           )}

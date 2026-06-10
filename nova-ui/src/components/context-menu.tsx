@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/cn";
-import { DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from "./dropdown-menu";
+import { DropdownMenuSeparator, DropdownMenuLabel } from "./dropdown-menu";
 
 export type ContextMenuItem =
   | { type: "item"; label: string; icon?: ReactNode; shortcut?: string; onSelect: () => void; disabled?: boolean }
@@ -30,7 +30,6 @@ const MENU_ITEM_HEIGHT = 32;
 export function ContextMenu({ children, items }: ContextMenuProps) {
   const [position, setPosition] = useState<MenuPosition | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const close = () => setPosition(null);
 
@@ -45,13 +44,11 @@ export function ContextMenu({ children, items }: ContextMenuProps) {
 
   useEffect(() => {
     if (!position) return;
-
     const handlePointerDown = (e: PointerEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         close();
       }
     };
-
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [position]);
@@ -59,12 +56,9 @@ export function ContextMenu({ children, items }: ContextMenuProps) {
   useEffect(() => {
     if (!position) return;
     requestAnimationFrame(() => {
-      const firstItem = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
-      firstItem?.focus();
+      menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     });
   }, [position]);
-
-  const selectableItems = items.filter((i) => i.type === "item" && !i.disabled);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Escape") {
@@ -72,12 +66,10 @@ export function ContextMenu({ children, items }: ContextMenuProps) {
       close();
       return;
     }
-
     const menuEl = menuRef.current;
     if (!menuEl) return;
     const focusable = Array.from(menuEl.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])'));
-    const current = document.activeElement as HTMLElement;
-    const idx = focusable.indexOf(current);
+    const idx = focusable.indexOf(document.activeElement as HTMLElement);
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -87,14 +79,12 @@ export function ContextMenu({ children, items }: ContextMenuProps) {
       focusable[(idx - 1 + focusable.length) % focusable.length]?.focus();
     } else if (e.key === "Enter" && idx >= 0) {
       e.preventDefault();
-      current.click();
+      (document.activeElement as HTMLElement).click();
     }
-
-    void selectableItems;
   };
 
   return (
-    <div ref={containerRef} onContextMenu={onContextMenu} className="contents">
+    <div onContextMenu={onContextMenu} className="contents">
       {children}
       {position && (
         <div
@@ -108,42 +98,39 @@ export function ContextMenu({ children, items }: ContextMenuProps) {
           )}
         >
           {items.map((item, i) => {
-            if (item.type === "separator") {
-              return <DropdownMenuSeparator key={i} />;
-            }
-            if (item.type === "label") {
-              return <DropdownMenuLabel key={i}>{item.label}</DropdownMenuLabel>;
-            }
+            if (item.type === "separator") return <DropdownMenuSeparator key={i} />;
+            if (item.type === "label") return <DropdownMenuLabel key={i}>{item.label}</DropdownMenuLabel>;
             return (
-              <ContextMenuItemWrapper key={i} item={item} onClose={close} />
+              <button
+                key={i}
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                disabled={item.disabled}
+                aria-disabled={item.disabled || undefined}
+                onClick={() => {
+                  if (item.disabled) return;
+                  item.onSelect();
+                  close();
+                }}
+                className={cn(
+                  "flex w-full cursor-pointer items-center gap-2 rounded-nova-sm px-2.5 py-1.5 text-left",
+                  "outline-none transition-colors duration-100",
+                  "focus:bg-surface-2 hover:bg-surface-2",
+                  "disabled:pointer-events-none disabled:opacity-50",
+                  "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted",
+                )}
+              >
+                {item.icon}
+                <span className="flex-1">{item.label}</span>
+                {item.shortcut && (
+                  <span className="ml-auto text-xs text-foreground-muted">{item.shortcut}</span>
+                )}
+              </button>
             );
           })}
         </div>
       )}
     </div>
-  );
-}
-
-function ContextMenuItemWrapper({
-  item,
-  onClose,
-}: {
-  item: Extract<ContextMenuItem, { type: "item" }>;
-  onClose: () => void;
-}) {
-  return (
-    <DropdownMenuItem
-      disabled={item.disabled}
-      onSelect={() => {
-        item.onSelect();
-        onClose();
-      }}
-    >
-      {item.icon}
-      <span className="flex-1">{item.label}</span>
-      {item.shortcut && (
-        <span className="ml-auto text-xs text-foreground-muted">{item.shortcut}</span>
-      )}
-    </DropdownMenuItem>
   );
 }

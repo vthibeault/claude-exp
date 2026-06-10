@@ -1,6 +1,7 @@
-import { useMemo, useState, type PointerEvent } from "react";
+import { useId, useMemo, useState, type PointerEvent } from "react";
 import { cn } from "@/lib/cn";
 import { useMeasure } from "@/lib/use-measure";
+import { useInView } from "@/lib/use-in-view";
 import {
   defaultFormat,
   linearPath,
@@ -18,23 +19,20 @@ export interface ChartSeries<T> {
 
 export interface LineChartProps<T extends Record<string, unknown>> {
   data: T[];
-  /** Key of the x-axis label field. */
   x: keyof T & string;
   series: Array<ChartSeries<T>>;
   height?: number;
-  /** Fill the area under each line. */
   area?: boolean;
-  /** Catmull-Rom smoothing instead of straight segments. */
   smooth?: boolean;
   showGrid?: boolean;
   showLegend?: boolean;
   formatY?: (v: number) => string;
+  animate?: boolean;
   className?: string;
 }
 
 const PAD = { top: 12, right: 12, bottom: 26, left: 44 };
 
-/** Dependency-free SVG line/area chart with hover tooltip. */
 export function LineChart<T extends Record<string, unknown>>({
   data,
   x,
@@ -45,9 +43,12 @@ export function LineChart<T extends Record<string, unknown>>({
   showGrid = true,
   showLegend = true,
   formatY = defaultFormat,
+  animate = true,
   className,
 }: LineChartProps<T>) {
-  const { ref, width } = useMeasure<HTMLDivElement>();
+  const { ref: measureRef, width } = useMeasure<HTMLDivElement>();
+  const { ref: inViewRef, inView } = useInView<HTMLDivElement>();
+  const clipId = useId().replace(/:/g, "");
   const [hover, setHover] = useState<number | null>(null);
 
   const values = useMemo(
@@ -74,9 +75,16 @@ export function LineChart<T extends Record<string, unknown>>({
   };
 
   const xLabelEvery = Math.max(1, Math.ceil(data.length / Math.max(1, Math.floor(innerW / 64))));
+  const revealed = !animate || inView;
+
+  // Combine refs
+  const setRef = (el: HTMLDivElement | null) => {
+    (measureRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+  };
 
   return (
-    <div ref={ref} className={cn("w-full", className)}>
+    <div ref={setRef} className={cn("w-full", className)}>
       {width > 0 && (
         <svg
           width={width}
@@ -86,6 +94,22 @@ export function LineChart<T extends Record<string, unknown>>({
           onPointerMove={onPointerMove}
           onPointerLeave={() => setHover(null)}
         >
+          <defs>
+            <clipPath id={clipId}>
+              <rect
+                x={PAD.left - 4}
+                y={0}
+                height={height}
+                width={revealed ? innerW + 20 : 0}
+                style={{
+                  transition: revealed
+                    ? "width 900ms cubic-bezier(0.16,1,0.3,1) 80ms"
+                    : "none",
+                }}
+              />
+            </clipPath>
+          </defs>
+
           {showGrid &&
             ticks.map((t) => (
               <g key={t}>
@@ -123,26 +147,35 @@ export function LineChart<T extends Record<string, unknown>>({
             ) : null,
           )}
 
-          {series.map((s, si) => {
-            const pts = data.map((d, i) => [sx(i), sy(Number(d[s.key]) || 0)] as [number, number]);
-            const color = seriesColor(si, s.color);
-            const line = toPath(pts);
-            return (
-              <g key={s.key}>
-                {area && pts.length > 1 && (
-                  <path
-                    d={`${line}L${pts[pts.length - 1][0]},${sy(ticks[0])}L${pts[0][0]},${sy(ticks[0])}Z`}
-                    fill={color}
-                    opacity={0.12}
-                  />
-                )}
-                <path d={line} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" />
-                {hover !== null && (
-                  <circle cx={pts[hover][0]} cy={pts[hover][1]} r={4} fill={color} stroke="var(--nova-surface)" strokeWidth={2} />
-                )}
-              </g>
-            );
-          })}
+          <g clipPath={`url(#${clipId})`}>
+            {series.map((s, si) => {
+              const pts = data.map((d, i) => [sx(i), sy(Number(d[s.key]) || 0)] as [number, number]);
+              const color = seriesColor(si, s.color);
+              const line = toPath(pts);
+              return (
+                <g key={s.key}>
+                  {area && pts.length > 1 && (
+                    <path
+                      d={`${line}L${pts[pts.length - 1][0]},${sy(ticks[0])}L${pts[0][0]},${sy(ticks[0])}Z`}
+                      fill={color}
+                      opacity={0.12}
+                    />
+                  )}
+                  <path d={line} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" />
+                  {hover !== null && (
+                    <circle
+                      cx={pts[hover][0]}
+                      cy={pts[hover][1]}
+                      r={4}
+                      fill={color}
+                      stroke="var(--nova-surface)"
+                      strokeWidth={2}
+                    />
+                  )}
+                </g>
+              );
+            })}
+          </g>
 
           {hover !== null && (
             <line

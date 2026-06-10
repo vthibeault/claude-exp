@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { useMeasure } from "@/lib/use-measure";
+import { useInView } from "@/lib/use-in-view";
 import { defaultFormat, seriesColor } from "./chart-utils";
 
 export interface FunnelSlice {
@@ -15,33 +16,38 @@ export interface FunnelChartProps {
   showValues?: boolean;
   showPercent?: boolean;
   formatValue?: (v: number) => string;
+  animate?: boolean;
   className?: string;
 }
 
 const GAP = 4;
 
-/** Dependency-free SVG funnel / pipeline chart. */
 export function FunnelChart({
   data,
   height = 300,
   showValues = true,
   showPercent = true,
   formatValue = defaultFormat,
+  animate = true,
   className,
 }: FunnelChartProps) {
-  const { ref, width } = useMeasure<HTMLDivElement>();
+  const { ref: measureRef, width } = useMeasure<HTMLDivElement>();
+  const { ref: inViewRef, inView } = useInView<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
 
+  const setRef = (el: HTMLDivElement | null) => {
+    (measureRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+  };
+
   if (data.length === 0) {
-    return <div ref={ref} className={cn("w-full", className)} />;
+    return <div ref={setRef} className={cn("w-full", className)} />;
   }
 
   const maxValue = data[0].value;
   const sliceH = data.length > 0 ? (height - GAP * (data.length - 1)) / data.length : 0;
+  const revealed = !animate || inView;
 
-  // Precompute trapezoid geometry for each slice.
-  // Top width = (value / maxValue) * width; centered horizontally.
-  // Bottom width = next slice's top width (or same as top for the last slice).
   const slices = data.map((slice, i) => {
     const topRatio = i === 0 ? 1 : data[i].value / maxValue;
     const botRatio = i < data.length - 1 ? data[i + 1].value / maxValue : data[i].value / maxValue;
@@ -50,7 +56,6 @@ export function FunnelChart({
     const topX = (width - topW) / 2;
     const botX = (width - botW) / 2;
     const y = i * (sliceH + GAP);
-    // Trapezoid polygon: top-left, top-right, bottom-right, bottom-left
     const points = [
       `${topX},${y}`,
       `${topX + topW},${y}`,
@@ -61,12 +66,12 @@ export function FunnelChart({
     const pct = maxValue > 0 ? (slice.value / maxValue) * 100 : 0;
     const midY = y + sliceH / 2;
     const midX = width / 2;
-    const sliceWidth = (topW + botW) / 2; // average width for text overflow check
+    const sliceWidth = (topW + botW) / 2;
     return { points, color, pct, midX, midY, sliceWidth, topW, botW };
   });
 
   return (
-    <div ref={ref} className={cn("w-full", className)}>
+    <div ref={setRef} className={cn("w-full", className)}>
       {width > 0 && (
         <svg
           width={width}
@@ -78,12 +83,20 @@ export function FunnelChart({
             const slice = data[i];
             const isHovered = hover === i;
             const labelInside = sl.sliceWidth > 120;
+            const delay = i * 60;
 
             return (
               <g
                 key={i}
                 onPointerEnter={() => setHover(i)}
                 onPointerLeave={() => setHover(null)}
+                style={{
+                  opacity: revealed ? 1 : 0,
+                  transform: revealed ? "translateY(0)" : "translateY(16px)",
+                  transition: revealed
+                    ? `opacity 400ms ease ${delay}ms, transform 500ms cubic-bezier(0.34,1.56,0.64,1) ${delay}ms`
+                    : "none",
+                }}
               >
                 <polygon
                   points={sl.points}
@@ -92,7 +105,6 @@ export function FunnelChart({
                   className="transition-opacity duration-100"
                 />
 
-                {/* Label always centered */}
                 <text
                   x={sl.midX}
                   y={sl.midY - (showValues || showPercent ? 7 : 0)}
@@ -104,7 +116,6 @@ export function FunnelChart({
                   {slice.label}
                 </text>
 
-                {/* Value and/or percent below the label (if slice is wide enough) */}
                 {(showValues || showPercent) && labelInside && (
                   <text
                     x={sl.midX}
@@ -120,7 +131,6 @@ export function FunnelChart({
                   </text>
                 )}
 
-                {/* When slice is too narrow: render values outside to the right */}
                 {(showValues || showPercent) && !labelInside && (
                   <text
                     x={width / 2 + sl.sliceWidth / 2 + 8}

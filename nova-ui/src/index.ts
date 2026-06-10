@@ -203,4 +203,15 @@ export type { ThemeBuilderProps } from "./components/theme-builder";
 export { GanttChart, useGantt } from "./components/gantt";
 export type { GanttChartProps, GanttTask, GanttGroup, GanttViewMode } from "./components/gantt";
 
+// Nova Doctrine — interaction systems
+export { FocusRingProvider } from "./components/focus-ring";
+export { AmbientProvider, useAmbient } from "./components/ambient";
+export { feedback, useFeedback } from "./lib/feedback";
+export type { FeedbackKind } from "./lib/feedback";
+export { createVelocityTracker, useSwipeDismiss } from "./lib/use-velocity";
+export type { UseSwipeDismissOptions } from "./lib/use-velocity";
+export { useProximity, useTrajectoryIntent } from "./lib/use-proximity";
+export { withViewTransition, useViewTransitionName } from "./lib/view-transitions";
+export { useInView } from "./lib/use-in-view";
+
 import "./styles/nova.css";

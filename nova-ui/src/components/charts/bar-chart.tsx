@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { useMeasure } from "@/lib/use-measure";
+import { useInView } from "@/lib/use-in-view";
 import { defaultFormat, niceTicks, scaleLinear, seriesColor } from "./chart-utils";
 import { ChartTooltip, type ChartSeries } from "./line-chart";
 
@@ -9,17 +10,16 @@ export interface BarChartProps<T extends Record<string, unknown>> {
   x: keyof T & string;
   series: Array<ChartSeries<T>>;
   height?: number;
-  /** Stack series instead of grouping them side by side. */
   stacked?: boolean;
   showGrid?: boolean;
   showLegend?: boolean;
   formatY?: (v: number) => string;
+  animate?: boolean;
   className?: string;
 }
 
 const PAD = { top: 12, right: 12, bottom: 26, left: 44 };
 
-/** Dependency-free SVG bar chart — grouped or stacked. */
 export function BarChart<T extends Record<string, unknown>>({
   data,
   x,
@@ -29,9 +29,11 @@ export function BarChart<T extends Record<string, unknown>>({
   showGrid = true,
   showLegend = true,
   formatY = defaultFormat,
+  animate = true,
   className,
 }: BarChartProps<T>) {
-  const { ref, width } = useMeasure<HTMLDivElement>();
+  const { ref: measureRef, width } = useMeasure<HTMLDivElement>();
+  const { ref: inViewRef, inView } = useInView<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
 
   const maxValue = useMemo(() => {
@@ -51,9 +53,15 @@ export function BarChart<T extends Record<string, unknown>>({
   const barW = stacked ? groupW : groupW / Math.max(1, series.length);
 
   const xLabelEvery = Math.max(1, Math.ceil(data.length / Math.max(1, Math.floor(innerW / 64))));
+  const revealed = !animate || inView;
+
+  const setRef = (el: HTMLDivElement | null) => {
+    (measureRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+  };
 
   return (
-    <div ref={ref} className={cn("w-full", className)}>
+    <div ref={setRef} className={cn("w-full", className)}>
       {width > 0 && (
         <svg
           width={width}
@@ -88,13 +96,13 @@ export function BarChart<T extends Record<string, unknown>>({
           {data.map((d, i) => {
             const cx = PAD.left + slot * i + slot / 2;
             let stackY = sy(0);
+            const delay = i * 30;
             return (
               <g key={i} onPointerEnter={() => setHover(i)}>
-                {/* Invisible hover target spanning the full column */}
                 <rect x={PAD.left + slot * i} y={PAD.top} width={slot} height={innerH} fill="transparent" />
                 {series.map((s, si) => {
                   const v = Number(d[s.key]) || 0;
-                  const barH = sy(0) - sy(v);
+                  const barH = Math.max(0, sy(0) - sy(v));
                   const bx = stacked ? cx - barW / 2 : cx - groupW / 2 + si * barW;
                   const by = stacked ? stackY - barH : sy(v);
                   if (stacked) stackY -= barH;
@@ -104,11 +112,18 @@ export function BarChart<T extends Record<string, unknown>>({
                       x={bx + 1}
                       y={by}
                       width={Math.max(0, barW - 2)}
-                      height={Math.max(0, barH)}
+                      height={barH}
                       rx={3}
                       fill={seriesColor(si, s.color)}
                       opacity={hover === null || hover === i ? 1 : 0.4}
-                      className="transition-opacity duration-100"
+                      style={{
+                        transformBox: "fill-box",
+                        transformOrigin: "center 100%",
+                        transform: revealed ? "scaleY(1)" : "scaleY(0)",
+                        transition: revealed
+                          ? `transform 500ms cubic-bezier(0.34,1.56,0.64,1) ${delay + si * 20}ms, opacity 150ms ease`
+                          : "opacity 150ms ease",
+                      }}
                     />
                   );
                 })}

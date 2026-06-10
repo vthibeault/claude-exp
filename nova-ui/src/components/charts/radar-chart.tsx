@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { useMeasure } from "@/lib/use-measure";
+import { useInView } from "@/lib/use-in-view";
 import { seriesColor } from "./chart-utils";
 
 export interface RadarSeries {
@@ -16,17 +17,17 @@ export interface RadarChartProps {
   height?: number;
   maxValue?: number;
   levels?: number;
+  animate?: boolean;
   className?: string;
 }
 
-/** Compute (x, y) on the radar for a given axis index and normalised value [0..1]. */
 function polarPoint(
   cx: number,
   cy: number,
   r: number,
   axisIndex: number,
   axisCount: number,
-  t: number, // 0 = center, 1 = outer edge
+  t: number,
 ): [number, number] {
   const angle = (2 * Math.PI * axisIndex) / axisCount - Math.PI / 2;
   return [cx + r * t * Math.cos(angle), cy + r * t * Math.sin(angle)];
@@ -36,7 +37,6 @@ function polygonPoints(pts: [number, number][]): string {
   return pts.map(([x, y]) => `${x},${y}`).join(" ");
 }
 
-/** Dependency-free SVG radar / spider chart. */
 export function RadarChart({
   data,
   axes,
@@ -44,19 +44,24 @@ export function RadarChart({
   height = 280,
   maxValue,
   levels = 5,
+  animate = true,
   className,
 }: RadarChartProps) {
-  const { ref, width } = useMeasure<HTMLDivElement>();
+  const { ref: measureRef, width } = useMeasure<HTMLDivElement>();
+  const { ref: inViewRef, inView } = useInView<HTMLDivElement>();
+
+  const setRef = (el: HTMLDivElement | null) => {
+    (measureRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+  };
 
   const size = Math.min(width, height);
   const cx = size / 2;
   const cy = size / 2;
-  // Leave room for axis labels: ~18% of size on each side
   const r = size * 0.38;
-
   const N = axes.length;
+  const revealed = !animate || inView;
 
-  // Resolve max value
   const resolvedMax = useMemo(() => {
     if (maxValue !== undefined && maxValue > 0) return maxValue;
     let m = 0;
@@ -76,7 +81,6 @@ export function RadarChart({
     return m > 0 ? m : 100;
   }, [data, axes, series, maxValue]);
 
-  // Concentric polygon points for each level
   const levelPolygons = useMemo(
     () =>
       Array.from({ length: levels }, (_, li) => {
@@ -87,14 +91,12 @@ export function RadarChart({
     [levels, axes, cx, cy, r, N],
   );
 
-  // Axis spokes and labels
   const axisLines = useMemo(
     () =>
       axes.map((label, ai) => {
         const [x2, y2] = polarPoint(cx, cy, r, ai, N, 1);
         const [lx, ly] = polarPoint(cx, cy, r + 18, ai, N, 1);
         const angle = (2 * Math.PI * ai) / N - Math.PI / 2;
-        // Anchor text based on which side of the chart
         const anchor =
           Math.abs(Math.cos(angle)) < 0.1
             ? "middle"
@@ -106,7 +108,6 @@ export function RadarChart({
     [axes, cx, cy, r, N],
   );
 
-  // Build data polygons
   type SeriesPolygon = { key: string; label: string; color: string; points: string };
   const seriesPolygons: SeriesPolygon[] = useMemo(() => {
     if (series && series.length > 0) {
@@ -124,23 +125,14 @@ export function RadarChart({
         };
       });
     }
-    // Simple usage: data keys match axes labels
     const pts = axes.map((ax, ai) => {
       const v = Number(data[ax]) || 0;
       const t = Math.min(1, Math.max(0, v / resolvedMax));
       return polarPoint(cx, cy, r, ai, N, t) as [number, number];
     });
-    return [
-      {
-        key: "__default__",
-        label: "",
-        color: seriesColor(0),
-        points: polygonPoints(pts),
-      },
-    ];
+    return [{ key: "__default__", label: "", color: seriesColor(0), points: polygonPoints(pts) }];
   }, [series, data, axes, resolvedMax, cx, cy, r, N]);
 
-  // Vertex dots for each series polygon
   const seriesDots = useMemo(() => {
     if (series && series.length > 0) {
       return series.map((s, si) =>
@@ -165,36 +157,16 @@ export function RadarChart({
   const showLegend = series && series.length > 1;
 
   return (
-    <div ref={ref} className={cn("w-full", className)}>
+    <div ref={setRef} className={cn("w-full", className)}>
       {width > 0 && size > 0 && N >= 3 && (
-        <svg
-          width={size}
-          height={size}
-          role="img"
-          aria-label={`Radar chart with ${N} axes`}
-        >
-          {/* Concentric grid polygons */}
+        <svg width={size} height={size} role="img" aria-label={`Radar chart with ${N} axes`}>
           {levelPolygons.map(({ t, points }) => (
-            <polygon
-              key={t}
-              points={points}
-              fill="none"
-              stroke="var(--nova-border)"
-              strokeWidth={1}
-            />
+            <polygon key={t} points={points} fill="none" stroke="var(--nova-border)" strokeWidth={1} />
           ))}
 
-          {/* Axis spokes */}
           {axisLines.map(({ label, x2, y2, lx, ly, anchor }) => (
             <g key={label}>
-              <line
-                x1={cx}
-                y1={cy}
-                x2={x2}
-                y2={y2}
-                stroke="var(--nova-border)"
-                strokeWidth={1}
-              />
+              <line x1={cx} y1={cy} x2={x2} y2={y2} stroke="var(--nova-border)" strokeWidth={1} />
               <text
                 x={lx}
                 y={ly}
@@ -207,8 +179,7 @@ export function RadarChart({
             </g>
           ))}
 
-          {/* Data polygons */}
-          {seriesPolygons.map(({ key, color, points }) => (
+          {seriesPolygons.map(({ key, color, points }, si) => (
             <polygon
               key={key}
               points={points}
@@ -217,10 +188,18 @@ export function RadarChart({
               stroke={color}
               strokeWidth={2}
               strokeLinejoin="round"
+              style={{
+                transformBox: "fill-box",
+                transformOrigin: "50% 50%",
+                transform: revealed ? "scale(1)" : "scale(0)",
+                opacity: revealed ? 1 : 0,
+                transition: revealed
+                  ? `transform 600ms cubic-bezier(0.34,1.56,0.64,1) ${si * 80}ms, opacity 300ms ease ${si * 80}ms`
+                  : "none",
+              }}
             />
           ))}
 
-          {/* Vertex dots */}
           {seriesDots.map((dots, si) =>
             dots.map(({ x, y, color }, ai) => (
               <circle
@@ -231,6 +210,15 @@ export function RadarChart({
                 fill={color}
                 stroke="var(--nova-surface)"
                 strokeWidth={1.5}
+                style={{
+                  transformBox: "fill-box",
+                  transformOrigin: "50% 50%",
+                  transform: revealed ? "scale(1)" : "scale(0)",
+                  opacity: revealed ? 1 : 0,
+                  transition: revealed
+                    ? `transform 500ms cubic-bezier(0.34,1.56,0.64,1) ${si * 80 + ai * 30 + 200}ms, opacity 200ms ease ${si * 80 + ai * 30 + 200}ms`
+                    : "none",
+                }}
               />
             )),
           )}

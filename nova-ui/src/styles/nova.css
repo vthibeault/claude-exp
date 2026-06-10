@@ -44,7 +44,114 @@
   /* Misc */
   --nova-ring: oklch(54% 0.23 277 / 0.5);
   --nova-overlay: oklch(15% 0.02 257 / 0.45);
-  --nova-shadow-color: oklch(20% 0.02 257);
+
+  /* ──────────────────────────────────────────────────────────────────────
+   * Nova Doctrine §1 — One Light Source
+   *
+   * Every shadow in the system is cast by a single imaginary light placed
+   * at compass angle 230° (upper-left). Shadow offsets therefore always
+   * point to the lower-right: offset = −light-vector × elevation-distance.
+   *
+   * --nova-light-x/y are the directional components derived from the
+   *   angle (screen-space: x = horizontal, y = vertical, both negative =
+   *   light from upper-left). The vertical component is intentionally
+   *   weighted heavier than a pure cos/sin pair would give — the light is
+   *   also "above" the screen plane, so shadows fall mostly downward.
+   *   They are PRECOMPUTED rather than written as sin()/cos() expressions
+   *   because CSS trig support across the LightningCSS pipeline + older
+   *   Safari is uneven; if you change --nova-light-angle, recompute the
+   *   pair (≈ cos/sin of the new direction) by hand to match.
+   * ────────────────────────────────────────────────────────────────────── */
+  --nova-light-angle: 230deg; /* where light comes from (compass: 230 ≈ upper-left) */
+  --nova-light-x: -0.34; /* precomputed directional components (unit vector) */
+  --nova-light-y: -0.77;
+
+  /* Shadow ink: dark blue-grey, never pure black — keeps shadows in the
+     same temperature family as the neutrals. */
+  --nova-shadow-color: oklch(0.25 0.02 257);
+
+  /* 1px specular top-edge highlight — the "lit edge" facing the light. */
+  --nova-specular: inset 0 1px 0 0 oklch(100% 0 0 / 0.07);
+
+  /* No glow in light mode; defined so var(--nova-glow) always resolves. */
+  --nova-glow: 0 0 0 0 transparent;
+
+  /* 5-step elevation scale. Each step is:
+     key shadow    — directional, offset = (−light-x, −light-y) × Npx,
+                     tighter blur, higher alpha (the object blocking light)
+     ambient shadow— omnidirectional (0 offset-x), larger blur, lower alpha
+                     (light bouncing around the room).
+     Elevation distances: 1, 2, 4, 8, 16 px. */
+  --nova-shadow-1:
+    calc(var(--nova-light-x) * -1px) calc(var(--nova-light-y) * -1px) 2px 0
+      color-mix(in oklch, var(--nova-shadow-color) 14%, transparent),
+    0 1px 3px 0 color-mix(in oklch, var(--nova-shadow-color) 7%, transparent);
+  --nova-shadow-2:
+    calc(var(--nova-light-x) * -2px) calc(var(--nova-light-y) * -2px) 4px -1px
+      color-mix(in oklch, var(--nova-shadow-color) 14%, transparent),
+    0 2px 8px -1px color-mix(in oklch, var(--nova-shadow-color) 8%, transparent);
+  --nova-shadow-3:
+    calc(var(--nova-light-x) * -4px) calc(var(--nova-light-y) * -4px) 7px -1px
+      color-mix(in oklch, var(--nova-shadow-color) 13%, transparent),
+    0 4px 16px -2px color-mix(in oklch, var(--nova-shadow-color) 9%, transparent);
+  --nova-shadow-4:
+    calc(var(--nova-light-x) * -8px) calc(var(--nova-light-y) * -8px) 12px -2px
+      color-mix(in oklch, var(--nova-shadow-color) 13%, transparent),
+    0 8px 28px -4px color-mix(in oklch, var(--nova-shadow-color) 11%, transparent);
+  --nova-shadow-5:
+    calc(var(--nova-light-x) * -16px) calc(var(--nova-light-y) * -16px) 20px -4px
+      color-mix(in oklch, var(--nova-shadow-color) 12%, transparent),
+    0 16px 48px -8px color-mix(in oklch, var(--nova-shadow-color) 14%, transparent);
+
+  /* ──────────────────────────────────────────────────────────────────────
+   * Nova Doctrine §2 — Spring System
+   *
+   * Real spring curves sampled into CSS linear(). Model: underdamped
+   * harmonic oscillator with unit displacement,
+   *
+   *   ω  = √(k/m)        natural frequency
+   *   ζ  = c / (2√(k·m)) damping ratio
+   *   ωd = ω·√(1 − ζ²)   damped frequency
+   *   x(t) = 1 − e^(−ζωt) · ( cos(ωd t) + (ζω/ωd)·sin(ωd t) )
+   *
+   * Each token is x(t) sampled at 24 uniform points over its paired
+   * duration. Pair with the matching --nova-duration-spring* token.
+   * ────────────────────────────────────────────────────────────────────── */
+
+  /* standard: k=320 c=28 m=1 → ζ≈0.783, ω≈17.89; slight overshoot,
+     peak ≈ 1.02 at ~280ms. Pair with --nova-duration-spring (550ms). */
+  --nova-spring: linear(
+    0, 0.073, 0.2322, 0.4145, 0.5848, 0.7265, 0.835, 0.9122, 0.9633, 0.9942,
+    1.0108, 1.0179, 1.0192, 1.0173, 1.0141, 1.0106, 1.0074, 1.0048, 1.0028,
+    1.0015, 1.0006, 1, 0.9998, 1
+  );
+
+  /* soft: k=320 c=34 m=1 → ζ≈0.950; gentle settle, no overshoot. */
+  --nova-spring-soft: linear(
+    0, 0.07, 0.2158, 0.3772, 0.5256, 0.65, 0.7483, 0.823, 0.8779, 0.9173,
+    0.945, 0.9641, 0.977, 0.9855, 0.9911, 0.9947, 0.9969, 0.9983, 0.9991,
+    0.9996, 0.9998, 1, 1, 1
+  );
+
+  /* snappy: k=480 c=30 m=1 → ζ≈0.685, ω≈21.91; overshoot peak ≈ 1.05.
+     For small fast elements. Pair with --nova-duration-spring-snappy. */
+  --nova-spring-snappy: linear(
+    0, 0.0476, 0.1619, 0.3085, 0.4624, 0.6075, 0.7341, 0.8378, 0.9179,
+    0.9758, 1.0147, 1.038, 1.0494, 1.0523, 1.0495, 1.0433, 1.0356, 1.0275,
+    1.02, 1.0135, 1.0081, 1.004, 1.0011, 0.999
+  );
+
+  /* heavy: k=320 c=38 m=1.4 → ζ≈0.898, ω≈15.12; slower, well damped,
+     barely kisses 1.002. For dialogs/sheets. Pair with -heavy duration. */
+  --nova-spring-heavy: linear(
+    0, 0.0805, 0.246, 0.4252, 0.585, 0.7137, 0.8106, 0.8799, 0.9272, 0.9582,
+    0.9777, 0.9894, 0.996, 0.9995, 1.0011, 1.0016, 1.0016, 1.0014, 1.0011,
+    1.0008, 1.0006, 1.0004, 1.0003, 1
+  );
+
+  --nova-duration-spring: 550ms;
+  --nova-duration-spring-snappy: 350ms;
+  --nova-duration-spring-heavy: 700ms;
 
   /* Categorical chart palette — perceptually spaced hues at matched lightness */
   --nova-chart-1: oklch(58% 0.21 277);
@@ -88,6 +195,35 @@
   --nova-ring: oklch(65% 0.2 277 / 0.55);
   --nova-overlay: oklch(8% 0.01 257 / 0.6);
   --nova-shadow-color: oklch(5% 0.01 257);
+
+  /* ── One Light Source, dark mode: the lights went down. ─────────────────
+     The key (directional) shadow loses definition — bigger blur, lower
+     alpha — and the ambient shadow takes over (a dim room has no crisp
+     shadows, only pooled darkness). Elevated surfaces additionally gain a
+     faint accent glow (--nova-glow) since emitted light, not reflected
+     light, now signals elevation. */
+  --nova-shadow-1:
+    calc(var(--nova-light-x) * -1px) calc(var(--nova-light-y) * -1px) 4px 0
+      color-mix(in oklch, var(--nova-shadow-color) 10%, transparent),
+    0 2px 8px 0 color-mix(in oklch, var(--nova-shadow-color) 28%, transparent);
+  --nova-shadow-2:
+    calc(var(--nova-light-x) * -2px) calc(var(--nova-light-y) * -2px) 7px -1px
+      color-mix(in oklch, var(--nova-shadow-color) 9%, transparent),
+    0 4px 14px -1px color-mix(in oklch, var(--nova-shadow-color) 32%, transparent);
+  --nova-shadow-3:
+    calc(var(--nova-light-x) * -4px) calc(var(--nova-light-y) * -4px) 12px -1px
+      color-mix(in oklch, var(--nova-shadow-color) 8%, transparent),
+    0 8px 24px -2px color-mix(in oklch, var(--nova-shadow-color) 36%, transparent);
+  --nova-shadow-4:
+    calc(var(--nova-light-x) * -8px) calc(var(--nova-light-y) * -8px) 18px -2px
+      color-mix(in oklch, var(--nova-shadow-color) 7%, transparent),
+    0 14px 40px -4px color-mix(in oklch, var(--nova-shadow-color) 40%, transparent);
+  --nova-shadow-5:
+    calc(var(--nova-light-x) * -16px) calc(var(--nova-light-y) * -16px) 28px -4px
+      color-mix(in oklch, var(--nova-shadow-color) 6%, transparent),
+    0 24px 64px -8px color-mix(in oklch, var(--nova-shadow-color) 45%, transparent);
+
+  --nova-glow: 0 0 24px oklch(0.6 0.15 277 / 0.08);
 
   --nova-chart-1: oklch(68% 0.18 277);
   --nova-chart-2: oklch(74% 0.13 190);
@@ -139,11 +275,18 @@
   --radius-nova-sm: calc(var(--nova-radius) - 0.25rem);
   --radius-nova-lg: calc(var(--nova-radius) + 0.375rem);
 
-  --shadow-nova-sm: 0 1px 2px 0 oklch(from var(--nova-shadow-color) l c h / 0.06);
-  --shadow-nova: 0 1px 3px 0 oklch(from var(--nova-shadow-color) l c h / 0.09),
-    0 1px 2px -1px oklch(from var(--nova-shadow-color) l c h / 0.09);
-  --shadow-nova-lg: 0 10px 24px -6px oklch(from var(--nova-shadow-color) l c h / 0.16),
-    0 4px 10px -6px oklch(from var(--nova-shadow-color) l c h / 0.1);
+  /* One Light Source elevation scale → shadow-nova-1…shadow-nova-5 */
+  --shadow-nova-1: var(--nova-shadow-1);
+  --shadow-nova-2: var(--nova-shadow-2);
+  --shadow-nova-3: var(--nova-shadow-3);
+  --shadow-nova-4: var(--nova-shadow-4);
+  --shadow-nova-5: var(--nova-shadow-5);
+
+  /* Legacy shadow names, aliased onto the elevation scale so existing
+     shadow-nova-sm / shadow-nova / shadow-nova-lg usage keeps working. */
+  --shadow-nova-sm: var(--nova-shadow-1);
+  --shadow-nova: var(--nova-shadow-2);
+  --shadow-nova-lg: var(--nova-shadow-4);
 
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
 
@@ -152,6 +295,13 @@
   --animate-nova-progress: nova-progress 1.4s ease-in-out infinite;
 
   --ease-nova: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Spring easings → ease-nova-spring* utilities (pair with the matching
+     --nova-duration-spring* durations). */
+  --ease-nova-spring: var(--nova-spring);
+  --ease-nova-spring-soft: var(--nova-spring-soft);
+  --ease-nova-spring-snappy: var(--nova-spring-snappy);
+  --ease-nova-spring-heavy: var(--nova-spring-heavy);
 }
 
 @keyframes nova-spin {
@@ -172,6 +322,96 @@
   }
   100% {
     translate: 250% 0;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Nova Doctrine §5 — Feedback Texture keyframes
+ *
+ * Physical vocabulary for state changes: success settles, errors shake and
+ * decay, destructive actions feel heavy, loading breathes.
+ * ------------------------------------------------------------------------- */
+
+/* success: a confident settle — overshoot then return (≈400ms feel). */
+@keyframes nova-settle {
+  0% {
+    scale: 1;
+  }
+  45% {
+    scale: 1.02;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+/* error: 2px horizontal shake, high frequency, fast decay — four swings,
+   each smaller than the last. */
+@keyframes nova-reject {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  12.5% {
+    translate: -2px 0;
+  }
+  25% {
+    translate: 2px 0;
+  }
+  37.5% {
+    translate: -1.25px 0;
+  }
+  50% {
+    translate: 1.25px 0;
+  }
+  62.5% {
+    translate: -0.75px 0;
+  }
+  75% {
+    translate: 0.75px 0;
+  }
+  87.5% {
+    translate: -0.25px 0;
+  }
+}
+
+/* destructive press: a slow, slight compression — the button feels heavier
+   than a normal one, as if it resists being pushed. */
+@keyframes nova-hesitate {
+  to {
+    scale: 0.985;
+  }
+}
+
+/* loading: a calm breath. Opacity only — safe under reduced motion. */
+@keyframes nova-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* skeleton: a highlight sweeping across (applied to a ::after overlay). */
+@keyframes nova-sheen {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 100% 0;
+  }
+}
+
+/* idle aliveness: a single presence pulse — a focus-ring-colored wave
+   expands once and dissipates. */
+@keyframes nova-pulse-once {
+  0% {
+    box-shadow: 0 0 0 0 var(--nova-ring);
+  }
+  100% {
+    box-shadow: 0 0 0 12px oklch(54% 0.23 277 / 0);
   }
 }
 
@@ -246,16 +486,17 @@
    * discrete transitions of `display` and `overlay`.
    * ------------------------------------------------------------------ */
 
+  /* §2 Spring System: dialogs ride the standard spring. */
   .nova-dialog {
     opacity: 0;
     scale: 0.96;
     translate: 0 0.5rem;
     transition:
-      opacity 0.2s var(--ease-nova),
-      scale 0.2s var(--ease-nova),
-      translate 0.2s var(--ease-nova),
-      display 0.2s allow-discrete,
-      overlay 0.2s allow-discrete;
+      opacity var(--nova-duration-spring) var(--nova-spring),
+      scale var(--nova-duration-spring) var(--nova-spring),
+      translate var(--nova-duration-spring) var(--nova-spring),
+      display var(--nova-duration-spring) allow-discrete,
+      overlay var(--nova-duration-spring) allow-discrete;
   }
 
   .nova-dialog[open] {
@@ -274,10 +515,12 @@
     background-color: var(--nova-overlay);
     backdrop-filter: blur(4px);
     opacity: 0;
+    /* Backdrop stays a plain fade, but its display/overlay hold matches the
+       dialog's spring duration so it doesn't vanish before the panel. */
     transition:
       opacity 0.2s ease,
-      display 0.2s allow-discrete,
-      overlay 0.2s allow-discrete;
+      display var(--nova-duration-spring) allow-discrete,
+      overlay var(--nova-duration-spring) allow-discrete;
   }
 
   .nova-dialog[open]::backdrop {
@@ -288,15 +531,16 @@
     }
   }
 
-  /* Sheet variant slides in from the inline-end edge. */
+  /* Sheet variant slides in from the inline-end edge.
+     §2 Spring System: sheets are big — they get the heavy spring. */
   .nova-sheet {
     opacity: 0;
     translate: 100% 0;
     transition:
-      opacity 0.3s var(--ease-nova),
-      translate 0.3s var(--ease-nova),
-      display 0.3s allow-discrete,
-      overlay 0.3s allow-discrete;
+      opacity var(--nova-duration-spring-heavy) var(--nova-spring-heavy),
+      translate var(--nova-duration-spring-heavy) var(--nova-spring-heavy),
+      display var(--nova-duration-spring-heavy) allow-discrete,
+      overlay var(--nova-duration-spring-heavy) allow-discrete;
   }
 
   .nova-sheet[open] {
@@ -309,14 +553,15 @@
     }
   }
 
+  /* §2 Spring System: popovers are small and fast — snappy spring. */
   .nova-popover {
     opacity: 0;
     scale: 0.97;
     transition:
-      opacity 0.15s var(--ease-nova),
-      scale 0.15s var(--ease-nova),
-      display 0.15s allow-discrete,
-      overlay 0.15s allow-discrete;
+      opacity var(--nova-duration-spring-snappy) var(--nova-spring-snappy),
+      scale var(--nova-duration-spring-snappy) var(--nova-spring-snappy),
+      display var(--nova-duration-spring-snappy) allow-discrete,
+      overlay var(--nova-duration-spring-snappy) allow-discrete;
   }
 
   .nova-popover:popover-open {
@@ -363,6 +608,166 @@
   .nova-details > summary::-webkit-details-marker {
     display: none;
   }
+
+  /* --------------------------------------------------------------------
+   * Nova Doctrine §3 — Real Glass
+   *
+   * Frosted material: blur + saturation boost behind, a translucent
+   * surface tint, a 1.5%-opacity feTurbulence noise layer to kill
+   * gradient banding on the blur, a specular lit top edge, and an
+   * elevation-2 shadow. The noise is a tiling inline SVG so there is no
+   * network request and no asset to ship.
+   * ------------------------------------------------------------------ */
+  .nova-glass {
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    backdrop-filter: blur(16px) saturate(1.5);
+    background:
+      /* 1.5% fractal noise to kill banding */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"),
+      color-mix(in oklch, var(--nova-surface) 65%, transparent);
+    box-shadow: var(--nova-specular), var(--nova-shadow-2);
+    border: 1px solid color-mix(in oklch, var(--nova-border) 50%, transparent);
+  }
+
+  /* Dark glass: darker base (less surface in the mix), stronger specular —
+     in a dim room the lit edge is the main cue that this is glass. */
+  .dark .nova-glass {
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E"),
+      color-mix(in oklch, var(--nova-surface) 55%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 oklch(100% 0 0 / 0.14),
+      var(--nova-shadow-2),
+      var(--nova-glow);
+  }
+
+  /* No backdrop-filter (older Firefox ESR, some WebViews): translucency
+     over unblurred content is unreadable — fall back to opaque surface. */
+  @supports not (backdrop-filter: blur(1px)) {
+    .nova-glass,
+    .dark .nova-glass {
+      background: var(--nova-surface);
+    }
+  }
+
+  /* --------------------------------------------------------------------
+   * Nova Doctrine §4 — Squircle corners (progressive)
+   *
+   * `corner-shape` ships behind the gate; unsupported browsers keep the
+   * normal border-radius. Squircles read visually smaller than round
+   * corners at equal radius, so the gate also bumps the radius. No SVG
+   * fallbacks — where it isn't supported, rounded corners are fine.
+   * ------------------------------------------------------------------ */
+  @supports (corner-shape: squircle) {
+    .nova-squircle {
+      corner-shape: squircle;
+      border-radius: calc(var(--nova-radius) * 1.5);
+    }
+  }
+
+  /* --------------------------------------------------------------------
+   * Nova Doctrine §5 — Feedback Texture utilities
+   * ------------------------------------------------------------------ */
+  .nova-feedback-success {
+    animation: nova-settle 450ms var(--nova-spring);
+  }
+
+  .nova-feedback-error {
+    animation: nova-reject 320ms linear;
+  }
+
+  .nova-feedback-hesitate {
+    animation: nova-hesitate 300ms var(--nova-spring-heavy) both;
+  }
+
+  .nova-breathe {
+    animation: nova-breathe 2.4s ease-in-out infinite;
+  }
+
+  /* Skeleton sheen: a soft highlight sweeps across via an ::after overlay.
+     The host clips it; the gradient is angled roughly perpendicular to the
+     light direction so the sheen agrees with the One Light Source. */
+  .nova-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nova-sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    translate: -100% 0;
+    background: linear-gradient(
+      105deg,
+      transparent 25%,
+      oklch(100% 0 0 / 0.35) 50%,
+      transparent 75%
+    );
+    animation: nova-sheen 1.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .dark .nova-sheen::after {
+    background: linear-gradient(
+      105deg,
+      transparent 25%,
+      oklch(100% 0 0 / 0.07) 50%,
+      transparent 75%
+    );
+  }
+
+  /* §7 Idle aliveness: one presence pulse (e.g. on mount of a primary CTA). */
+  .nova-pulse-once {
+    animation: nova-pulse-once 900ms var(--nova-spring-soft) 1;
+  }
+
+  /* --------------------------------------------------------------------
+   * Nova Doctrine §6 — Scroll With Mass (progressive)
+   *
+   * Scroll-driven animations; the whole block is gated, so unsupported
+   * browsers simply get static elements.
+   *
+   * Note on .nova-depth-back (the 0.97-speed parallax background layer):
+   * intentionally OMITTED. A pure-CSS counter-scroll requires the
+   * translation to be a function of total scrolled distance, but
+   * animation-timeline maps scroll progress (0–100% of an unknown range)
+   * to a keyframe distance fixed at authoring time — correct only for one
+   * specific page height, and it desyncs badly on short/long pages.
+   * ------------------------------------------------------------------ */
+  @supports (animation-timeline: scroll()) {
+    /* Sticky header that condenses over the first 120px of scroll. */
+    .nova-condense {
+      animation: nova-condense linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 120px;
+    }
+
+    @keyframes nova-condense {
+      to {
+        padding-block: 0.5rem;
+        scale: 0.99;
+        box-shadow: var(--nova-shadow-2);
+      }
+    }
+
+    /* Elements fade + rise as they enter the viewport. */
+    .nova-reveal {
+      animation: nova-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+
+    @keyframes nova-reveal {
+      from {
+        opacity: 0;
+        translate: 0 1rem;
+      }
+      to {
+        opacity: 1;
+        translate: 0 0;
+      }
+    }
+  }
 }
 
 @layer utilities {
@@ -373,6 +778,28 @@
     .nova-popover,
     .nova-details::details-content {
       transition-duration: 0.01ms;
+    }
+
+    /* Nova Doctrine §8 — disable all transform-based feedback, the sheen
+       sweep, the presence pulse, and scroll-driven motion. Opacity-only
+       animations (.nova-breathe) are allowed to keep running: they convey
+       loading state without movement. */
+    .nova-feedback-success,
+    .nova-feedback-error,
+    .nova-feedback-hesitate,
+    .nova-pulse-once,
+    .nova-sheen::after,
+    .nova-condense,
+    .nova-reveal {
+      animation: none;
+    }
+
+    /* Scroll-revealed content must not be stuck invisible: with the
+       animation removed, elements simply render in place. Detach the
+       timelines too, for engines that keep them on shorthand reset. */
+    .nova-condense,
+    .nova-reveal {
+      animation-timeline: none;
     }
   }
 }

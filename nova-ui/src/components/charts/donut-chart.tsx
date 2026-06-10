@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { useInView } from "@/lib/use-in-view";
 import { defaultFormat, seriesColor } from "./chart-utils";
 
 export interface DonutSlice {
@@ -12,10 +13,10 @@ export interface DonutChartProps {
   data: DonutSlice[];
   size?: number;
   thickness?: number;
-  /** Content rendered in the donut hole; defaults to the total. */
   center?: ReactNode;
   showLegend?: boolean;
   format?: (v: number) => string;
+  animate?: boolean;
   className?: string;
 }
 
@@ -28,7 +29,6 @@ function arcPath(cx: number, cy: number, r: number, a0: number, a1: number): str
   return `M${x0},${y0}A${r},${r},0,${large},1,${x1},${y1}`;
 }
 
-/** Dependency-free SVG donut chart with hoverable slices and legend. */
 export function DonutChart({
   data,
   size = 200,
@@ -36,19 +36,23 @@ export function DonutChart({
   center,
   showLegend = true,
   format = defaultFormat,
+  animate = true,
   className,
 }: DonutChartProps) {
+  const { ref, inView } = useInView<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
   const total = data.reduce((sum, d) => sum + Math.max(0, d.value), 0);
   const r = (size - thickness) / 2;
   const c = size / 2;
+  const circumference = 2 * Math.PI * r;
 
   let angle = -Math.PI / 2;
   const gap = data.length > 1 ? 0.02 : 0;
+  const revealed = !animate || inView;
 
   return (
     <div className={cn("flex flex-wrap items-center gap-6", className)}>
-      <div className="relative" style={{ width: size, height: size }}>
+      <div ref={ref} className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} role="img" aria-label={`Donut chart, total ${format(total)}`}>
           {data.map((d, i) => {
             const frac = total > 0 ? Math.max(0, d.value) / total : 0;
@@ -56,6 +60,7 @@ export function DonutChart({
             const a1 = angle + frac * Math.PI * 2 - gap;
             angle += frac * Math.PI * 2;
             if (frac === 0) return null;
+            const sliceLen = frac * circumference;
             return (
               <path
                 key={d.label}
@@ -65,7 +70,14 @@ export function DonutChart({
                 strokeWidth={hover === i ? thickness + 4 : thickness}
                 strokeLinecap="round"
                 opacity={hover === null || hover === i ? 1 : 0.35}
-                className="cursor-pointer transition-[stroke-width,opacity] duration-150"
+                strokeDasharray={`${sliceLen} ${circumference}`}
+                strokeDashoffset={revealed ? 0 : sliceLen}
+                style={{
+                  transition: revealed
+                    ? `stroke-dashoffset 700ms cubic-bezier(0.16,1,0.3,1) ${i * 80}ms, stroke-width 150ms ease, opacity 150ms ease`
+                    : "stroke-width 150ms ease, opacity 150ms ease",
+                }}
+                className="cursor-pointer"
                 onPointerEnter={() => setHover(i)}
                 onPointerLeave={() => setHover(null)}
               />

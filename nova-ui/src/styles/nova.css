@@ -10,6 +10,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer base {
 :root {
   /* Neutrals — slightly cool gray ramp */
   --nova-bg: oklch(98.5% 0.002 247);
@@ -163,8 +164,9 @@
 
   --nova-radius: 0.625rem;
 }
+} /* end @layer base */
 
-.dark {
+html.dark {
   --nova-bg: oklch(16.5% 0.015 257);
   --nova-surface: oklch(20% 0.016 257);
   --nova-surface-2: oklch(24% 0.018 257);

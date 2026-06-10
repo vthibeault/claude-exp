@@ -780,7 +780,6 @@ function Showcase() {
           <BreadcrumbSeparator />
           <BreadcrumbItem current>Breadcrumb</BreadcrumbItem>
         </Breadcrumb>
-        <BreadcrumbEllipsis />
       </Section>
 
       {/* Feedback */}

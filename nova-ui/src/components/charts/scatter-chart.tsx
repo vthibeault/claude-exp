@@ -41,14 +41,9 @@ export function ScatterChart({
   animate = true,
   className,
 }: ScatterChartProps) {
-  const { ref: measureRef, width } = useMeasure<HTMLDivElement>();
-  const { ref: inViewRef, inView } = useInView<HTMLDivElement>();
+  const { ref, width } = useMeasure<HTMLDivElement>();
+  const inView = useInView(ref);
   const [hover, setHover] = useState<{ si: number; di: number } | null>(null);
-
-  const setRef = (el: HTMLDivElement | null) => {
-    (measureRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-    (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-  };
 
   const innerW = Math.max(0, width - PAD.left - PAD.right);
   const innerH = height - PAD.top - PAD.bottom;
@@ -112,7 +107,7 @@ export function ScatterChart({
     : null;
 
   return (
-    <div ref={setRef} className={cn("w-full", className)}>
+    <div ref={ref} className={cn("w-full", className)}>
       {width > 0 && (
         <svg
           width={width}

@@ -31,17 +31,12 @@ export function FunnelChart({
   animate = true,
   className,
 }: FunnelChartProps) {
-  const { ref: measureRef, width } = useMeasure<HTMLDivElement>();
-  const { ref: inViewRef, inView } = useInView<HTMLDivElement>();
+  const { ref, width } = useMeasure<HTMLDivElement>();
+  const inView = useInView(ref);
   const [hover, setHover] = useState<number | null>(null);
 
-  const setRef = (el: HTMLDivElement | null) => {
-    (measureRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-    (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-  };
-
   if (data.length === 0) {
-    return <div ref={setRef} className={cn("w-full", className)} />;
+    return <div ref={ref} className={cn("w-full", className)} />;
   }
 
   const maxValue = data[0].value;
@@ -71,7 +66,7 @@ export function FunnelChart({
   });
 
   return (
-    <div ref={setRef} className={cn("w-full", className)}>
+    <div ref={ref} className={cn("w-full", className)}>
       {width > 0 && (
         <svg
           width={width}

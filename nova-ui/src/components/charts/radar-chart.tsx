@@ -47,13 +47,8 @@ export function RadarChart({
   animate = true,
   className,
 }: RadarChartProps) {
-  const { ref: measureRef, width } = useMeasure<HTMLDivElement>();
-  const { ref: inViewRef, inView } = useInView<HTMLDivElement>();
-
-  const setRef = (el: HTMLDivElement | null) => {
-    (measureRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-    (inViewRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-  };
+  const { ref, width } = useMeasure<HTMLDivElement>();
+  const inView = useInView(ref);
 
   const size = Math.min(width, height);
   const cx = size / 2;
@@ -157,7 +152,7 @@ export function RadarChart({
   const showLegend = series && series.length > 1;
 
   return (
-    <div ref={setRef} className={cn("w-full", className)}>
+    <div ref={ref} className={cn("w-full", className)}>
       {width > 0 && size > 0 && N >= 3 && (
         <svg width={size} height={size} role="img" aria-label={`Radar chart with ${N} axes`}>
           {levelPolygons.map(({ t, points }) => (

@@ -350,7 +350,9 @@ export function TimePickerField({
   const openPopover = () => {
     if (disabled) return;
     setOpen(true);
-    showPopover(floatingRef.current);
+    // onDismiss mirrors the onToggle "closed" sync for fallback browsers,
+    // where the native toggle event never fires.
+    showPopover(floatingRef.current, () => setOpen(false));
   };
 
   const handleChange = (v: TimeValue) => {

@@ -81,8 +81,10 @@ export function MentionInput({
   const openSuggestions = useCallback((pos: PopoverPos) => {
     setPopoverPos(pos);
     setOpen(true);
-    showPopover(popoverRef.current);
-  }, []);
+    // onDismiss syncs state when the fallback (no Popover API) light-dismiss
+    // hides the panel — the native `toggle` event never fires there.
+    showPopover(popoverRef.current, closeSuggestions);
+  }, [closeSuggestions]);
 
   /** Find the trigger query from the current caret position. Returns null if not in a mention. */
   const getTriggerQuery = useCallback((): { query: string; range: Range } | null => {

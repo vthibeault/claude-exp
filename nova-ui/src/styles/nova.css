@@ -320,6 +320,20 @@
     }
   }
 
+  /* Fallback equivalent for browsers without the Popover API: the JS helpers
+     toggle data-popover-open instead. Kept as a separate rule — a selector
+     list containing :popover-open would be dropped wholesale by exactly the
+     browsers that need this. */
+  .nova-popover[data-popover-open] {
+    opacity: 1;
+    scale: 1;
+
+    @starting-style {
+      opacity: 0;
+      scale: 0.97;
+    }
+  }
+
   /* Accordion content height animates to `auto` via interpolate-size. */
   .nova-details::details-content {
     block-size: 0;

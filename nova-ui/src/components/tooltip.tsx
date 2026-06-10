@@ -42,7 +42,9 @@ export function Tooltip({ content, side = "top", delay = 250, className, childre
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       setOpen(true);
-      showPopover(floatingRef.current);
+      // onDismiss keeps React state in sync when the fallback light-dismiss
+      // (no Popover API) hides the tooltip.
+      showPopover(floatingRef.current, () => setOpen(false));
     }, after);
   };
 

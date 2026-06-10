@@ -55,7 +55,13 @@ export function DropdownMenu({ side = "bottom", align = "start", children }: Dro
 
   const set = (next: boolean) => {
     setOpen(next);
-    if (next) showPopover(floatingRef.current);
+    // onDismiss mirrors the onToggle "closed" sync for fallback browsers,
+    // where the native toggle event never fires.
+    if (next)
+      showPopover(floatingRef.current, () => {
+        setOpen(false);
+        anchorRef.current?.focus();
+      });
     else hidePopover(floatingRef.current);
   };
 

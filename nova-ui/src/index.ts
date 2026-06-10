@@ -151,4 +151,16 @@ export type { AlertProps, AlertDialogProps } from "./components/alert";
 export { SidebarProvider, Sidebar, SidebarGroup, SidebarItem, SidebarToggle, useSidebar } from "./components/sidebar";
 export type { SidebarProps, SidebarGroupProps, SidebarItemProps } from "./components/sidebar";
 
+// Layout
+export { PanelGroup, Panel, PanelResizeHandle } from "./components/resizable";
+export type { PanelGroupProps, PanelProps } from "./components/resizable";
+
+// Context Menu
+export { ContextMenu } from "./components/context-menu";
+export type { ContextMenuProps, ContextMenuItem } from "./components/context-menu";
+
+// Tree
+export { Tree } from "./components/tree";
+export type { TreeProps, TreeNode } from "./components/tree";
+
 import "./styles/nova.css";

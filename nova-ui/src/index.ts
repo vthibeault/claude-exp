@@ -83,4 +83,42 @@ export { Kbd } from "./components/kbd";
 export { Separator } from "./components/separator";
 export type { SeparatorProps } from "./components/separator";
 
+// Charts
+export { LineChart, ChartTooltip } from "./components/charts/line-chart";
+export type { LineChartProps, ChartSeries } from "./components/charts/line-chart";
+export { BarChart } from "./components/charts/bar-chart";
+export type { BarChartProps } from "./components/charts/bar-chart";
+export { DonutChart } from "./components/charts/donut-chart";
+export type { DonutChartProps, DonutSlice } from "./components/charts/donut-chart";
+export { Sparkline } from "./components/charts/sparkline";
+export type { SparklineProps } from "./components/charts/sparkline";
+export { CHART_COLORS, niceTicks, scaleLinear } from "./components/charts/chart-utils";
+export { useMeasure } from "./lib/use-measure";
+
+// Data display
+export { DataTable, useDataTable } from "./components/data-table";
+export type { DataTableProps, DataTableColumn, UseDataTableOptions, SortDirection } from "./components/data-table";
+export { DataGrid } from "./components/data-grid";
+export type { DataGridProps, DataGridColumn, DataGridColumnType } from "./components/data-grid";
+export { Pagination } from "./components/pagination";
+export type { PaginationProps } from "./components/pagination";
+
+// Advanced inputs
+export { Combobox } from "./components/combobox";
+export type { ComboboxProps, ComboboxOption } from "./components/combobox";
+export { TagInput } from "./components/tag-input";
+export type { TagInputProps } from "./components/tag-input";
+export { Calendar } from "./components/calendar";
+export type { CalendarProps } from "./components/calendar";
+export { DatePicker } from "./components/date-picker";
+export type { DatePickerProps } from "./components/date-picker";
+export { Slider } from "./components/slider";
+export type { SliderProps } from "./components/slider";
+export { NumberInput } from "./components/number-input";
+export type { NumberInputProps } from "./components/number-input";
+export { PinInput } from "./components/pin-input";
+export type { PinInputProps } from "./components/pin-input";
+export { FileUpload } from "./components/file-upload";
+export type { FileUploadProps } from "./components/file-upload";
+
 import "./styles/nova.css";

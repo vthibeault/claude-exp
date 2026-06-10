@@ -31,7 +31,13 @@ Everything degrades gracefully: feature detection guards the Popover API calls, 
 
 ## Components
 
-`Button` (variants, sizes, `loading`, `asChild`) · `Badge` · `Card` · `Input` · `Textarea` · `Label` · `Field` (auto-wired ids/ARIA) · `Select` · `Switch` · `Checkbox` · `Tabs` (roving tabindex) · `Dialog` (modal + sheet) · `Popover` · `DropdownMenu` (full keyboard nav) · `Tooltip` · `Accordion` · `Toast` (`useToast`) · `Avatar` · `Progress` · `Skeleton` · `Spinner` · `Kbd` · `Separator`
+**Primitives** — `Button` (variants, sizes, `loading`, `asChild`) · `Badge` · `Card` · `Input` · `Textarea` · `Label` · `Field` (auto-wired ids/ARIA) · `Select` · `Switch` · `Checkbox` · `Tabs` (roving tabindex) · `Dialog` (modal + sheet) · `Popover` · `DropdownMenu` (full keyboard nav) · `Tooltip` · `Accordion` · `Toast` (`useToast`) · `Avatar` · `Progress` · `Skeleton` · `Spinner` · `Kbd` · `Separator`
+
+**Charts** (zero-dependency SVG, OKLCH palette, hover tooltips, ResizeObserver-responsive) — `LineChart` (line/area, smoothed) · `BarChart` (grouped/stacked) · `DonutChart` · `Sparkline`
+
+**Data** — `DataTable` (search, sort, paginate, row selection, column visibility — headless `useDataTable` hook included) · `DataGrid` (editable cells, spreadsheet arrow-key navigation, type-to-edit) · `Pagination`
+
+**Advanced inputs** — `Combobox` (ARIA 1.2, `aria-activedescendant`) · `TagInput` (tokens + suggestions) · `Calendar` / `DatePicker` (`role="grid"` keyboard nav, Intl-only — no date lib) · `Slider` (single + dual-thumb range) · `NumberInput` (steppers, clamping) · `PinInput` (OTP, paste support) · `FileUpload` (drag & drop)
 
 ## Usage
 

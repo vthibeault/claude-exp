@@ -17,6 +17,7 @@ import {
   AccordionItem,
   Avatar,
   Badge,
+  BarChart,
   Button,
   Card,
   CardContent,
@@ -25,6 +26,10 @@ import {
   CardHeader,
   CardTitle,
   Checkbox,
+  Combobox,
+  DataGrid,
+  DataTable,
+  DatePicker,
   Dialog,
   DialogDescription,
   DialogFooter,
@@ -36,10 +41,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DonutChart,
   Field,
+  FileUpload,
   Input,
   Kbd,
   Label,
+  LineChart,
+  NumberInput,
+  PinInput,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -47,7 +57,10 @@ import {
   Select,
   Separator,
   Skeleton,
+  Slider,
+  Sparkline,
   Switch,
+  TagInput,
   Tabs,
   TabsContent,
   TabsList,
@@ -82,11 +95,78 @@ function Section({ title, description, children }: { title: string; description:
   );
 }
 
+const revenue = [
+  { month: "Jan", revenue: 42_000, costs: 28_000 },
+  { month: "Feb", revenue: 48_500, costs: 30_200 },
+  { month: "Mar", revenue: 46_100, costs: 29_400 },
+  { month: "Apr", revenue: 55_300, costs: 31_800 },
+  { month: "May", revenue: 61_900, costs: 33_500 },
+  { month: "Jun", revenue: 58_700, costs: 34_100 },
+  { month: "Jul", revenue: 67_400, costs: 35_900 },
+  { month: "Aug", revenue: 72_800, costs: 36_300 },
+];
+
+const traffic = [
+  { label: "Organic search", value: 4820 },
+  { label: "Direct", value: 2940 },
+  { label: "Referral", value: 1610 },
+  { label: "Social", value: 980 },
+];
+
+interface Member {
+  name: string;
+  role: string;
+  status: string;
+  commits: number;
+  trend: number[];
+}
+
+const members: Member[] = [
+  { name: "Alice Moreau", role: "Engineer", status: "active", commits: 312, trend: [4, 6, 5, 9, 12, 10, 14] },
+  { name: "Bob Tremblay", role: "Manager", status: "away", commits: 87, trend: [3, 2, 4, 3, 2, 5, 4] },
+  { name: "Chloé Gagnon", role: "Designer", status: "active", commits: 145, trend: [2, 5, 7, 6, 9, 8, 11] },
+  { name: "David Roy", role: "Engineer", status: "active", commits: 268, trend: [8, 7, 9, 11, 10, 13, 12] },
+  { name: "Emma Côté", role: "Engineer", status: "offline", commits: 198, trend: [5, 6, 4, 7, 8, 6, 9] },
+  { name: "Felix Lavoie", role: "Designer", status: "away", commits: 64, trend: [1, 3, 2, 4, 3, 5, 4] },
+  { name: "Gabrielle Roux", role: "Manager", status: "active", commits: 102, trend: [4, 3, 5, 6, 5, 7, 6] },
+  { name: "Hugo Bélanger", role: "Engineer", status: "active", commits: 231, trend: [6, 8, 7, 10, 9, 12, 11] },
+  { name: "Iris Pelletier", role: "Designer", status: "offline", commits: 119, trend: [3, 4, 5, 4, 6, 5, 7] },
+  { name: "Jules Bergeron", role: "Engineer", status: "active", commits: 176, trend: [5, 4, 6, 8, 7, 9, 10] },
+  { name: "Karine Demers", role: "Manager", status: "away", commits: 93, trend: [2, 4, 3, 5, 4, 6, 5] },
+  { name: "Léo Fortin", role: "Engineer", status: "active", commits: 287, trend: [9, 8, 11, 10, 12, 14, 13] },
+];
+
+const statusVariant = { active: "success", away: "warning", offline: "neutral" } as const;
+
+interface Sku {
+  sku: string;
+  product: string;
+  category: string;
+  price: number;
+  stock: number;
+}
+
+const initialInventory: Sku[] = [
+  { sku: "NV-001", product: "Quantum keyboard", category: "Hardware", price: 149, stock: 42 },
+  { sku: "NV-002", product: "Photon mouse", category: "Hardware", price: 79, stock: 128 },
+  { sku: "NV-003", product: "Nebula desk mat", category: "Accessories", price: 29, stock: 310 },
+  { sku: "NV-004", product: "Pulse headset", category: "Audio", price: 199, stock: 17 },
+  { sku: "NV-005", product: "Orbit webcam", category: "Hardware", price: 119, stock: 56 },
+];
+
 function Showcase() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [progress, setProgress] = useState(62);
+  const [inventory, setInventory] = useState(initialInventory);
+  const [country, setCountry] = useState<string>();
+  const [tags, setTags] = useState<string[]>(["react", "typescript"]);
+  const [date, setDate] = useState<Date>();
+  const [volume, setVolume] = useState<number | [number, number]>(35);
+  const [priceRange, setPriceRange] = useState<number | [number, number]>([25, 75]);
+  const [quantity, setQuantity] = useState<number | null>(2);
+  const [pin, setPin] = useState("");
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-12">
@@ -345,6 +425,210 @@ function Showcase() {
           </div>
         </div>
       </Section>
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Charts</h2>
+          <p className="text-sm text-muted">
+            Zero-dependency SVG charts on the OKLCH palette — hover for tooltips.
+          </p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue vs costs</CardTitle>
+              <CardDescription>Line + area, smoothed</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LineChart
+                data={revenue}
+                x="month"
+                series={[
+                  { key: "revenue", label: "Revenue" },
+                  { key: "costs", label: "Costs" },
+                ]}
+                area
+                height={220}
+                formatY={(v) => `$${(v / 1000).toFixed(0)}k`}
+              />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly comparison</CardTitle>
+              <CardDescription>Grouped bars</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BarChart
+                data={revenue}
+                x="month"
+                series={[
+                  { key: "revenue", label: "Revenue" },
+                  { key: "costs", label: "Costs" },
+                ]}
+                height={220}
+                formatY={(v) => `$${(v / 1000).toFixed(0)}k`}
+              />
+            </CardContent>
+          </Card>
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Traffic sources</CardTitle>
+              <CardDescription>Donut with hoverable slices + inline sparklines</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center gap-10">
+              <DonutChart data={traffic} />
+              <div className="flex flex-col gap-3">
+                {[
+                  { label: "Sessions", data: [120, 132, 128, 145, 160, 152, 171] },
+                  { label: "Sign-ups", data: [8, 12, 9, 14, 18, 16, 22] },
+                  { label: "Churn", data: [9, 8, 8, 7, 6, 7, 5], color: "var(--nova-chart-4)" },
+                ].map((kpi) => (
+                  <div key={kpi.label} className="flex items-center gap-3">
+                    <span className="w-20 text-sm text-muted">{kpi.label}</span>
+                    <Sparkline data={kpi.data} color={kpi.color} />
+                    <span className="text-sm font-medium tabular-nums">
+                      {kpi.data[kpi.data.length - 1]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Data table</h2>
+          <p className="text-sm text-muted">
+            Search, sort, paginate, select rows, toggle columns — headless useDataTable underneath.
+          </p>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <DataTable
+              data={members}
+              columns={[
+                { key: "name", header: "Name", sortable: true, pinned: true },
+                { key: "role", header: "Role", sortable: true },
+                {
+                  key: "status",
+                  header: "Status",
+                  render: (m) => <Badge variant={statusVariant[m.status as keyof typeof statusVariant]}>{m.status}</Badge>,
+                },
+                { key: "commits", header: "Commits", sortable: true, align: "right" },
+                {
+                  key: "trend",
+                  header: "Activity",
+                  render: (m) => <Sparkline data={m.trend} width={80} height={22} />,
+                },
+              ]}
+              pageSize={5}
+              selectable
+              getRowId={(m) => m.name}
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Data grid</h2>
+          <p className="text-sm text-muted">
+            Spreadsheet keys: arrows move, Enter/F2 or double-click edits, type to replace, Esc cancels.
+          </p>
+        </div>
+        <DataGrid
+          data={inventory}
+          columns={[
+            { key: "sku", header: "SKU", width: "90px" },
+            { key: "product", header: "Product", editable: true },
+            {
+              key: "category",
+              header: "Category",
+              type: "select",
+              options: ["Hardware", "Accessories", "Audio"],
+              editable: true,
+            },
+            { key: "price", header: "Price ($)", type: "number", editable: true, align: "right" },
+            { key: "stock", header: "Stock", type: "number", editable: true, align: "right" },
+          ]}
+          onRowChange={(row, i) => {
+            setInventory((prev) => prev.map((r, ri) => (ri === i ? row : r)));
+            toast({ title: `${row.sku} updated`, variant: "success", duration: 1800 });
+          }}
+        />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Advanced inputs</h2>
+          <p className="text-sm text-muted">
+            Combobox, tags, date picker, sliders, steppers, OTP and file upload — all dependency-free.
+          </p>
+        </div>
+        <Card>
+          <CardContent className="grid gap-6 p-6 @lg:grid-cols-2">
+            <Field label="Country" description="ARIA 1.2 combobox — type to filter.">
+              <Combobox
+                value={country}
+                onValueChange={setCountry}
+                placeholder="Search countries…"
+                options={[
+                  { value: "ca", label: "Canada" },
+                  { value: "fr", label: "France" },
+                  { value: "de", label: "Germany" },
+                  { value: "jp", label: "Japan" },
+                  { value: "br", label: "Brazil" },
+                  { value: "au", label: "Australia" },
+                  { value: "in", label: "India" },
+                  { value: "us", label: "United States" },
+                ]}
+              />
+            </Field>
+
+            <Field label="Skills" description="Enter or comma adds; Backspace removes.">
+              <TagInput
+                value={tags}
+                onValueChange={setTags}
+                suggestions={["react", "typescript", "css", "node", "graphql", "rust", "python"]}
+                placeholder="Add a skill…"
+              />
+            </Field>
+
+            <Field label="Launch date" description="Full keyboard grid: arrows, PageUp/Down.">
+              <DatePicker value={date} onValueChange={setDate} />
+            </Field>
+
+            <Field label="Quantity" description="Steppers, arrow keys, clamped 1–99.">
+              <NumberInput value={quantity} onValueChange={setQuantity} min={1} max={99} />
+            </Field>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>Volume — {volume as number}%</Label>
+              <Slider value={volume} onValueChange={setVolume} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>
+                Price range — ${(priceRange as [number, number])[0]} to ${(priceRange as [number, number])[1]}
+              </Label>
+              <Slider value={priceRange} onValueChange={setPriceRange} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>One-time code {pin.length === 6 && <Badge variant="success">verified</Badge>}</Label>
+              <PinInput length={6} value={pin} onValueChange={setPin} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>Attachments</Label>
+              <FileUpload accept="image/*,.pdf" maxSize={5 * 1024 * 1024} />
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
       <Section title="Container queries" description="This card adapts to its own width (@container), not the viewport.">
         <div className="grid w-full gap-4 @xl:grid-cols-2">

@@ -60,7 +60,9 @@ export function MultiSelect({
   const openDropdown = () => {
     if (disabled) return;
     setOpen(true);
-    showPopover(popoverRef.current);
+    // onDismiss syncs state when the fallback (no Popover API) light-dismiss
+    // hides the panel — the native `toggle` event never fires there.
+    showPopover(popoverRef.current, closeDropdown);
     // Focus search input on desktop only — on touch, keyboard would occlude the list
     if (window.matchMedia("(pointer: fine)").matches) {
       requestAnimationFrame(() => searchRef.current?.focus());

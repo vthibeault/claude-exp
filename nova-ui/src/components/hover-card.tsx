@@ -79,7 +79,9 @@ export function HoverCard({ children, openDelay = 300, closeDelay = 150 }: Hover
     if (open) return;
     openTimeout.current = setTimeout(() => {
       setOpen(true);
-      showPopover(floatingRef.current);
+      // onDismiss syncs state when the fallback (no Popover API) light-dismiss
+      // hides the card — the native `toggle` event never fires there.
+      showPopover(floatingRef.current, () => setOpen(false));
     }, openDelay);
   };
 
@@ -167,14 +169,8 @@ export function HoverCardContent({
       className={cn(
         "nova-popover fixed inset-auto m-0",
         "bg-surface border border-border rounded-nova-lg shadow-nova-lg p-4 w-64 text-sm",
-        "transition-[opacity,scale,translate] duration-150",
-        "opacity-100 scale-100",
         className,
       )}
-      style={{
-        // @starting-style equivalent via inline style — browsers that support @starting-style
-        // will animate from opacity:0; we provide the end state here.
-      }}
     >
       {open ? children : null}
     </div>

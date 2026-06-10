@@ -87,17 +87,50 @@ const POPOVER_SUPPORTED =
   typeof HTMLElement !== "undefined" && "showPopover" in HTMLElement.prototype;
 
 /**
+ * Cleanup functions for the fallback light-dismiss listeners, keyed by the
+ * popover element. Only populated when POPOVER_SUPPORTED is false.
+ */
+const fallbackDismissCleanups = new WeakMap<HTMLElement, () => void>();
+
+/**
  * Show a [popover] element.
  * Uses the native Popover API where available; falls back to a data-attribute
  * toggle for iOS < 17 / older browsers (paired with the CSS in nova.css).
+ *
+ * In fallback mode the native `toggle` event never fires, so light dismiss
+ * (outside tap) and Escape are emulated here with document-level listeners.
+ * `onDismiss` is invoked after the element is hidden by either path so the
+ * caller can sync its React state (in supported browsers `onDismiss` is
+ * ignored — the native toggle event handles state sync).
  */
-export function showPopover(el: HTMLElement | null) {
+export function showPopover(el: HTMLElement | null, onDismiss?: () => void) {
   if (!el || !el.isConnected) return;
   if (POPOVER_SUPPORTED) {
     try { el.showPopover(); } catch { /* already open */ }
   } else {
+    // Drop any listeners from a previous show before registering new ones.
+    fallbackDismissCleanups.get(el)?.();
+
     el.dataset.popoverOpen = "";
     el.style.zIndex = "9999";
+
+    const dismiss = () => {
+      hidePopover(el); // also runs the cleanup below
+      onDismiss?.();
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      if (!el.contains(e.target as Node)) dismiss();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dismiss();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    fallbackDismissCleanups.set(el, () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      fallbackDismissCleanups.delete(el);
+    });
   }
 }
 
@@ -105,10 +138,14 @@ export function showPopover(el: HTMLElement | null) {
  * Hide a [popover] element.
  */
 export function hidePopover(el: HTMLElement | null) {
-  if (!el || !el.isConnected) return;
+  if (!el) return;
   if (POPOVER_SUPPORTED) {
+    if (!el.isConnected) return;
     try { el.hidePopover(); } catch { /* already hidden */ }
   } else {
+    // Always tear down the fallback dismiss listeners, even if the element
+    // has been disconnected in the meantime (avoids leaked document listeners).
+    fallbackDismissCleanups.get(el)?.();
     delete el.dataset.popoverOpen;
     el.style.zIndex = "";
   }

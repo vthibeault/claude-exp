@@ -128,7 +128,9 @@ export function BreadcrumbEllipsis() {
   const toggle = () => {
     const next = !open;
     setOpen(next);
-    if (next) showPopover(floatingRef.current);
+    // onDismiss mirrors the onToggle "closed" sync for fallback browsers,
+    // where the native toggle event never fires.
+    if (next) showPopover(floatingRef.current, () => setOpen(false));
     else hidePopover(floatingRef.current);
   };
 

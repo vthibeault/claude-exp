@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   Bell,
   ChevronRight,
@@ -34,7 +34,7 @@ import {
   Checkbox,
   Collapsible, CollapsibleContent, CollapsibleTrigger,
   Combobox,
-  CommandPalette, CommandProvider, useRegisterCommands,
+  CommandProvider, useCommand, useRegisterCommands,
   ContextMenu,
   DataGrid,
   DataTable,
@@ -86,15 +86,49 @@ import {
   BarChart,
   // Gantt
   GanttChart,
+  // Nova Doctrine
+  FocusRingProvider,
+  AmbientProvider,
+  feedback,
 } from "../src";
 
 function toggleTheme() {
   const flip = () => {
     const dark = document.documentElement.classList.toggle("dark");
-    localStorage.setItem("nova-theme", dark ? "dark" : "light");
+    try {
+      localStorage.setItem("nova-theme", dark ? "dark" : "light");
+    } catch {
+      // localStorage unavailable (private mode) — theme still toggles, just isn't persisted.
+    }
   };
   if (document.startViewTransition) document.startViewTransition(flip);
   else flip();
+}
+
+/** Copy text to the clipboard with a fallback for insecure contexts (e.g. http over LAN). */
+async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fall through to the legacy path.
+    }
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 function Section({ title, description, children }: { title: string; description: string; children: ReactNode }) {
@@ -259,6 +293,116 @@ const ganttTasks = [
   { id: "t10", groupId: "launch",  label: "GA launch",         start: d(22),  end: d(22), milestone: true, dependencies: ["t8"] },
 ];
 
+function NovaDoctrine() {
+  const { toast } = useToast();
+  const successRef = useRef<HTMLButtonElement>(null);
+  const errorRef = useRef<HTMLButtonElement>(null);
+  const warningRef = useRef<HTMLButtonElement>(null);
+
+  return (
+    <section className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight">Nova Doctrine</h2>
+        <p className="text-sm text-muted">
+          One Light Source · Spring physics · Glass surfaces · Focus Ring · Ambient awareness · Haptic feedback
+        </p>
+      </div>
+
+      {/* Glass card */}
+      <div className="nova-glass rounded-nova-lg border border-border p-6 flex flex-col gap-3">
+        <p className="text-sm font-medium">Glass surface</p>
+        <p className="text-xs text-muted">
+          Renders with <code className="rounded bg-surface-2 px-1">.nova-glass</code> — backdrop blur + noise texture + specular highlight. Falls back to opaque surface when backdrop-filter is unsupported.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm">Primary on glass</Button>
+          <Button size="sm" variant="outline">Outline</Button>
+          <Badge variant="success">live</Badge>
+        </div>
+      </div>
+
+      {/* Feedback textures */}
+      <Card>
+        <CardContent className="flex flex-wrap gap-4 p-6">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium">Haptic feedback</p>
+            <p className="text-xs text-muted mb-2">
+              CSS animation + <code className="rounded bg-surface-2 px-1">navigator.vibrate()</code> — click to feel it.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                ref={successRef}
+                size="sm"
+                variant="soft"
+                onClick={() => {
+                  feedback(successRef.current, "success");
+                  toast({ title: "Success feedback fired", variant: "success" });
+                }}
+              >
+                Success
+              </Button>
+              <Button
+                ref={errorRef}
+                size="sm"
+                variant="soft"
+                onClick={() => {
+                  feedback(errorRef.current, "error");
+                  toast({ title: "Error feedback fired", variant: "danger" });
+                }}
+              >
+                Error
+              </Button>
+              <Button
+                ref={warningRef}
+                size="sm"
+                variant="soft"
+                onClick={() => {
+                  feedback(warningRef.current, "warning");
+                  toast({ title: "Warning feedback fired" });
+                }}
+              >
+                Warning
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Focus ring */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-6">
+          <p className="text-sm font-medium">Shared focus ring</p>
+          <p className="text-xs text-muted">
+            A single DOM element tracks focus via FLIP-style position interpolation with a spring overshoot. Tab through the inputs below — watch the ring glide and stretch.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Input placeholder="Focus me" className="w-40" />
+            <Input placeholder="Then me" className="w-40" />
+            <Button size="sm">Button</Button>
+            <Button size="sm" variant="outline">Outline</Button>
+            <Switch />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Spring animation classes */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-6">
+          <p className="text-sm font-medium">Nova Breathe &amp; Sheen</p>
+          <p className="text-xs text-muted">
+            CSS utility classes: <code className="rounded bg-surface-2 px-1">.nova-breathe</code> (subtle scale pulse) and{" "}
+            <code className="rounded bg-surface-2 px-1">.nova-sheen</code> (traveling highlight).
+          </p>
+          <div className="flex flex-wrap gap-4 items-center">
+            <Button className="nova-breathe" size="sm">Breathing</Button>
+            <div className="nova-sheen rounded-nova border border-border px-4 py-2 text-sm font-medium bg-surface">Sheen effect</div>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
 function GanttDemo() {
   return (
     <section className="flex flex-col gap-4">
@@ -310,6 +454,7 @@ function Showcase() {
   const [skills, setSkills]                   = useState<string[]>(["react"]);
   const [timeValue, setTimeValue]             = useState({ hour: 9, minute: 30 });
   const stepper                               = useStepper(stepperSteps);
+  const { setOpen: openPalette }              = useCommand();
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-12">
@@ -343,7 +488,7 @@ function Showcase() {
 
       {/* Command Palette */}
       <Section title="Command Palette" description="Press ⌘K (or Ctrl+K) anywhere — fuzzy search with bold highlights, recent history, and page-scoped commands.">
-        <Button variant="outline" onClick={() => (document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })))}>
+        <Button variant="outline" onClick={() => openPalette(true)}>
           Open palette <Kbd>⌘K</Kbd>
         </Button>
         <p className="text-sm text-muted">
@@ -1023,7 +1168,17 @@ function Showcase() {
           <h2 className="text-lg font-semibold tracking-tight">Theme Builder</h2>
           <p className="text-sm text-muted">Live OKLCH token editor — move a slider and watch every component on this page update instantly.</p>
         </div>
-        <ThemeBuilder onExport={(css) => { navigator.clipboard.writeText(css).then(() => toast({ title: "CSS copied to clipboard!", variant: "success" })); }} />
+        <ThemeBuilder
+          onExport={(css) => {
+            void copyToClipboard(css).then((ok) =>
+              toast(
+                ok
+                  ? { title: "CSS copied to clipboard!", variant: "success" }
+                  : { title: "Couldn't copy — clipboard unavailable", variant: "danger" },
+              ),
+            );
+          }}
+        />
       </section>
 
       {/* Container queries */}
@@ -1048,6 +1203,9 @@ function Showcase() {
       {/* Gantt Chart */}
       <GanttDemo />
 
+      {/* Nova Doctrine */}
+      <NovaDoctrine />
+
       <footer className="pb-8 text-center text-sm text-subtle">
         Nova UI — next-gen component library · React 19 · Tailwind v4 · OKLCH · Popover API · &lt;dialog&gt; · @starting-style
       </footer>
@@ -1057,11 +1215,16 @@ function Showcase() {
 
 export function App() {
   return (
-    <ToastProvider>
-      <CommandProvider>
-        <CommandPalette />
-        <Showcase />
-      </CommandProvider>
-    </ToastProvider>
+    <FocusRingProvider>
+      <AmbientProvider>
+        <ToastProvider>
+          <CommandProvider>
+            {/* CommandProvider already renders the palette — rendering a second
+                <CommandPalette /> here would open two modal dialogs at once. */}
+            <Showcase />
+          </CommandProvider>
+        </ToastProvider>
+      </AmbientProvider>
+    </FocusRingProvider>
   );
 }

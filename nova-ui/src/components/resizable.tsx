@@ -217,7 +217,11 @@ export function PanelResizeHandle({ className }: PanelResizeHandleProps) {
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     const index = getPanelIndex();
     if (index < 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Some browsers throw if the pointer is already gone (e.g. after pointercancel).
+    }
     dragState.current = {
       startPos: direction === "horizontal" ? e.clientX : e.clientY,
       panelIndex: index,
@@ -239,7 +243,18 @@ export function PanelResizeHandle({ className }: PanelResizeHandleProps) {
   };
 
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // Capture may already be released (e.g. after pointercancel).
+    }
+    dragState.current = null;
+    setDragging(false);
+  };
+
+  // On touch devices the browser fires pointercancel if it takes over the
+  // gesture; reset drag state so the handle doesn't get stuck mid-drag.
+  const onPointerCancel = () => {
     dragState.current = null;
     setDragging(false);
   };
@@ -273,10 +288,13 @@ export function PanelResizeHandle({ className }: PanelResizeHandleProps) {
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
       onDoubleClick={onDoubleClick}
       onKeyDown={onKeyDown}
       className={cn(
-        "shrink-0 bg-transparent transition-colors",
+        // touch-none: without it mobile browsers hijack the drag for scrolling
+        // (pointercancel fires and the resize aborts mid-gesture).
+        "shrink-0 touch-none bg-transparent transition-colors",
         "hover:bg-primary/20 focus-visible:outline-none focus-visible:bg-primary/30",
         dragging && "bg-primary/40",
         isHorizontal

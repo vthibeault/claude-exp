@@ -62,7 +62,9 @@ export function Popover({ open: controlledOpen, onOpenChange, side, align, child
   const setOpen = (next: boolean) => {
     if (!isControlled) setInternalOpen(next);
     onOpenChange?.(next);
-    if (next) showPopover(floatingRef.current);
+    // onDismiss syncs state when the fallback (no Popover API) light-dismiss
+    // hides the panel — the native `toggle` event never fires there.
+    if (next) showPopover(floatingRef.current, () => setOpen(false));
     else hidePopover(floatingRef.current);
   };
 

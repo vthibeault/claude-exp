@@ -50,6 +50,7 @@ import {
   LineChart,
   NumberInput,
   PinInput,
+  PivotTable,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -153,6 +154,46 @@ const initialInventory: Sku[] = [
   { sku: "NV-004", product: "Pulse headset", category: "Audio", price: 199, stock: 17 },
   { sku: "NV-005", product: "Orbit webcam", category: "Hardware", price: 119, stock: 56 },
 ];
+
+const pivotSales = (() => {
+  const regions: Array<[string, string[]]> = [
+    ["Americas", ["USA", "Canada", "Brazil"]],
+    ["EMEA", ["France", "Germany", "UK"]],
+    ["APAC", ["Japan", "Australia"]],
+  ];
+  const categories = ["Hardware", "Audio", "Accessories"];
+  const quarters = ["Q1", "Q2", "Q3", "Q4"];
+  const rows: Array<{
+    region: string;
+    country: string;
+    category: string;
+    quarter: string;
+    revenue: number;
+    units: number;
+  }> = [];
+  let seed = 7;
+  const rand = () => {
+    // Deterministic pseudo-random so the demo is stable across reloads.
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  for (const [region, countries] of regions)
+    for (const country of countries)
+      for (const category of categories)
+        for (const quarter of quarters) {
+          if (rand() < 0.2) continue; // sparse combinations, like real data
+          const units = Math.round(20 + rand() * 180);
+          rows.push({
+            region,
+            country,
+            category,
+            quarter,
+            units,
+            revenue: Math.round(units * (40 + rand() * 160)),
+          });
+        }
+  return rows;
+})();
 
 function Showcase() {
   const { toast } = useToast();
@@ -558,6 +599,37 @@ function Showcase() {
             setInventory((prev) => prev.map((r, ri) => (ri === i ? row : r)));
             toast({ title: `${row.sku} updated`, variant: "success", duration: 1800 });
           }}
+        />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Pivot table</h2>
+          <p className="text-sm text-muted">
+            Drop fields into Rows, Columns and Values; pick the aggregation per value. Group rows carry
+            their subtotal, with grand totals on the last row and column. Click a chevron to collapse a group.
+          </p>
+        </div>
+        <PivotTable
+          data={pivotSales}
+          fields={[
+            { key: "region", label: "Region", numeric: false },
+            { key: "country", label: "Country", numeric: false },
+            { key: "category", label: "Category", numeric: false },
+            { key: "quarter", label: "Quarter", numeric: false },
+            { key: "revenue", label: "Revenue" },
+            { key: "units", label: "Units" },
+          ]}
+          defaultConfig={{
+            rows: ["region", "country"],
+            columns: ["quarter"],
+            values: [{ key: "revenue", aggregation: "sum" }],
+          }}
+          format={(n, v) =>
+            v.key === "revenue" && v.aggregation !== "count"
+              ? `$${Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n)}`
+              : Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(n)
+          }
         />
       </section>
 

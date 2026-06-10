@@ -102,6 +102,16 @@ export { DataGrid } from "./components/data-grid";
 export type { DataGridProps, DataGridColumn, DataGridColumnType } from "./components/data-grid";
 export { Pagination } from "./components/pagination";
 export type { PaginationProps } from "./components/pagination";
+export { PivotTable } from "./components/pivot-table";
+export type { PivotTableProps, PivotField } from "./components/pivot-table";
+export { buildPivot, leafCount, AGGREGATION_LABELS } from "./lib/pivot";
+export type {
+  PivotConfig,
+  PivotValueConfig,
+  PivotAggregation,
+  PivotNode,
+  PivotResult,
+} from "./lib/pivot";
 
 // Advanced inputs
 export { Combobox } from "./components/combobox";

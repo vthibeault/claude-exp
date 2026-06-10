@@ -35,7 +35,7 @@ Everything degrades gracefully: feature detection guards the Popover API calls, 
 
 **Charts** (zero-dependency SVG, OKLCH palette, hover tooltips, ResizeObserver-responsive) — `LineChart` (line/area, smoothed) · `BarChart` (grouped/stacked) · `DonutChart` · `Sparkline`
 
-**Data** — `DataTable` (search, sort, paginate, row selection, column visibility — headless `useDataTable` hook included) · `DataGrid` (editable cells, spreadsheet arrow-key navigation, type-to-edit) · `Pagination`
+**Data** — `DataTable` (search, sort, paginate, row selection, column visibility — headless `useDataTable` hook included) · `DataGrid` (editable cells, spreadsheet arrow-key navigation, type-to-edit) · `PivotTable` (configurable row/column/value fields, sum/avg/count/min/max aggregations, collapsible groups, subtotals on every group level, grand total row + column — pure `buildPivot` engine exported separately) · `Pagination`
 
 **Advanced inputs** — `Combobox` (ARIA 1.2, `aria-activedescendant`) · `TagInput` (tokens + suggestions) · `Calendar` / `DatePicker` (`role="grid"` keyboard nav, Intl-only — no date lib) · `Slider` (single + dual-thumb range) · `NumberInput` (steppers, clamping) · `PinInput` (OTP, paste support) · `FileUpload` (drag & drop)
 

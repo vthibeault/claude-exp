@@ -34,7 +34,7 @@ import {
   Checkbox,
   Collapsible, CollapsibleContent, CollapsibleTrigger,
   Combobox,
-  CommandPalette, CommandProvider, useRegisterCommands,
+  CommandProvider, useCommand, useRegisterCommands,
   ContextMenu,
   DataGrid,
   DataTable,
@@ -91,10 +91,40 @@ import {
 function toggleTheme() {
   const flip = () => {
     const dark = document.documentElement.classList.toggle("dark");
-    localStorage.setItem("nova-theme", dark ? "dark" : "light");
+    try {
+      localStorage.setItem("nova-theme", dark ? "dark" : "light");
+    } catch {
+      // localStorage unavailable (private mode) — theme still toggles, just isn't persisted.
+    }
   };
   if (document.startViewTransition) document.startViewTransition(flip);
   else flip();
+}
+
+/** Copy text to the clipboard with a fallback for insecure contexts (e.g. http over LAN). */
+async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fall through to the legacy path.
+    }
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 function Section({ title, description, children }: { title: string; description: string; children: ReactNode }) {
@@ -310,6 +340,7 @@ function Showcase() {
   const [skills, setSkills]                   = useState<string[]>(["react"]);
   const [timeValue, setTimeValue]             = useState({ hour: 9, minute: 30 });
   const stepper                               = useStepper(stepperSteps);
+  const { setOpen: openPalette }              = useCommand();
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-12">
@@ -343,7 +374,7 @@ function Showcase() {
 
       {/* Command Palette */}
       <Section title="Command Palette" description="Press ⌘K (or Ctrl+K) anywhere — fuzzy search with bold highlights, recent history, and page-scoped commands.">
-        <Button variant="outline" onClick={() => (document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })))}>
+        <Button variant="outline" onClick={() => openPalette(true)}>
           Open palette <Kbd>⌘K</Kbd>
         </Button>
         <p className="text-sm text-muted">
@@ -1023,7 +1054,17 @@ function Showcase() {
           <h2 className="text-lg font-semibold tracking-tight">Theme Builder</h2>
           <p className="text-sm text-muted">Live OKLCH token editor — move a slider and watch every component on this page update instantly.</p>
         </div>
-        <ThemeBuilder onExport={(css) => { navigator.clipboard.writeText(css).then(() => toast({ title: "CSS copied to clipboard!", variant: "success" })); }} />
+        <ThemeBuilder
+          onExport={(css) => {
+            void copyToClipboard(css).then((ok) =>
+              toast(
+                ok
+                  ? { title: "CSS copied to clipboard!", variant: "success" }
+                  : { title: "Couldn't copy — clipboard unavailable", variant: "danger" },
+              ),
+            );
+          }}
+        />
       </section>
 
       {/* Container queries */}
@@ -1059,7 +1100,8 @@ export function App() {
   return (
     <ToastProvider>
       <CommandProvider>
-        <CommandPalette />
+        {/* CommandProvider already renders the palette — rendering a second
+            <CommandPalette /> here would open two modal dialogs at once. */}
         <Showcase />
       </CommandProvider>
     </ToastProvider>

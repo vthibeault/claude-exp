@@ -131,7 +131,11 @@ function loadRecent(): string[] {
 
 function saveRecent(id: string) {
   const prev = loadRecent().filter((x) => x !== id);
-  localStorage.setItem(RECENT_KEY, JSON.stringify([id, ...prev].slice(0, MAX_RECENT)));
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify([id, ...prev].slice(0, MAX_RECENT)));
+  } catch {
+    // localStorage unavailable or quota exceeded (private mode) — ignore.
+  }
 }
 
 // ---------------------------------------------------------------------------

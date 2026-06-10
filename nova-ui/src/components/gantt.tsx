@@ -418,7 +418,11 @@ export function GanttChart({
     type: "move" | "resize-left" | "resize-right",
   ) => {
     e.stopPropagation();
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Some browsers throw if the pointer is already gone (e.g. after pointercancel).
+    }
     dragRef.current = {
       type,
       taskId: task.id,
@@ -491,7 +495,11 @@ export function GanttChart({
   const onBarPointerUp = (e: ReactPointerEvent<HTMLElement>) => {
     const drag = dragRef.current;
     if (!drag) return;
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // Capture may already be released (e.g. after pointercancel).
+    }
 
     const { barEl, taskId } = drag;
     const pendingStart = barEl.dataset.pendingStart
@@ -508,10 +516,30 @@ export function GanttChart({
     dragRef.current = null;
   };
 
+  // pointercancel fires when the browser takes over the gesture (e.g. scroll
+  // on touch). Revert the bar to its original position and reset drag state
+  // so the chart doesn't wedge mid-drag.
+  const onBarPointerCancel = () => {
+    const drag = dragRef.current;
+    if (!drag || drag.type === "progress") return;
+    const { barEl } = drag;
+    delete barEl.dataset.pendingStart;
+    delete barEl.dataset.pendingEnd;
+    const left = dateToX(drag.origStart, drag.chartStart, drag.dayWidth);
+    const width = dateToX(drag.origEnd, drag.chartStart, drag.dayWidth) - left;
+    barEl.style.left = `${left}px`;
+    barEl.style.width = `${Math.max(drag.dayWidth, width)}px`;
+    dragRef.current = null;
+  };
+
   // ── Progress drag ──────────────────────────────────────────────────────────
   const onProgressPointerDown = (e: ReactPointerEvent<HTMLElement>, task: GanttTask) => {
     e.stopPropagation();
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Some browsers throw if the pointer is already gone (e.g. after pointercancel).
+    }
     dragRef.current = {
       type: "progress",
       taskId: task.id,
@@ -542,12 +570,26 @@ export function GanttChart({
   const onProgressPointerUp = (e: ReactPointerEvent<HTMLElement>) => {
     const drag = dragRef.current;
     if (!drag || drag.type !== "progress") return;
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // Capture may already be released (e.g. after pointercancel).
+    }
     const val = drag.barEl.dataset.pendingProgress;
     if (val !== undefined) {
       updateTask(drag.taskId, { progress: Number(val) });
       delete drag.barEl.dataset.pendingProgress;
     }
+    dragRef.current = null;
+  };
+
+  // Reset the progress drag if the browser cancels the pointer gesture.
+  const onProgressPointerCancel = () => {
+    const drag = dragRef.current;
+    if (!drag || drag.type !== "progress") return;
+    delete drag.barEl.dataset.pendingProgress;
+    const fill = drag.barEl.querySelector<HTMLElement>("[data-progress-fill]");
+    if (fill) fill.style.width = `${drag.origProgress}%`;
     dragRef.current = null;
   };
 
@@ -767,9 +809,11 @@ export function GanttChart({
                     onBarPointerDown={onBarPointerDown}
                     onBarPointerMove={onBarPointerMove}
                     onBarPointerUp={onBarPointerUp}
+                    onBarPointerCancel={onBarPointerCancel}
                     onProgressPointerDown={onProgressPointerDown}
                     onProgressPointerMove={onProgressPointerMove}
                     onProgressPointerUp={onProgressPointerUp}
+                    onProgressPointerCancel={onProgressPointerCancel}
                   />
                 );
               })}
@@ -1008,7 +1052,7 @@ function LabelTaskRow({ task, height, indent, onLabelChange, onDelete }: LabelTa
       />
       <button
         onClick={onDelete}
-        className="shrink-0 opacity-0 group-hover/row:opacity-100 focus:opacity-100 text-subtle hover:text-danger transition-opacity p-1 rounded touch-manipulation"
+        className="shrink-0 opacity-0 group-hover/row:opacity-100 focus:opacity-100 pointer-coarse:opacity-100 text-subtle hover:text-danger transition-opacity p-1 rounded touch-manipulation"
         aria-label="Delete task"
       >
         <Trash2 className="size-3" />
@@ -1031,9 +1075,11 @@ interface TaskBarProps {
   ) => void;
   onBarPointerMove: (e: ReactPointerEvent<HTMLElement>) => void;
   onBarPointerUp: (e: ReactPointerEvent<HTMLElement>) => void;
+  onBarPointerCancel: (e: ReactPointerEvent<HTMLElement>) => void;
   onProgressPointerDown: (e: ReactPointerEvent<HTMLElement>, task: GanttTask) => void;
   onProgressPointerMove: (e: ReactPointerEvent<HTMLElement>) => void;
   onProgressPointerUp: (e: ReactPointerEvent<HTMLElement>) => void;
+  onProgressPointerCancel: (e: ReactPointerEvent<HTMLElement>) => void;
 }
 
 function TaskBar({
@@ -1046,9 +1092,11 @@ function TaskBar({
   onBarPointerDown,
   onBarPointerMove,
   onBarPointerUp,
+  onBarPointerCancel,
   onProgressPointerDown,
   onProgressPointerMove,
   onProgressPointerUp,
+  onProgressPointerCancel,
 }: TaskBarProps) {
   const top = rowIndex * rowHeight + 4;
   const barHeight = rowHeight - 8;
@@ -1103,6 +1151,7 @@ function TaskBar({
       onPointerDown={(e) => onBarPointerDown(e, task, "move")}
       onPointerMove={onBarPointerMove}
       onPointerUp={onBarPointerUp}
+      onPointerCancel={onBarPointerCancel}
       title={task.label}
     >
       {/* Progress fill */}
@@ -1119,7 +1168,7 @@ function TaskBar({
 
       {/* Left resize handle */}
       <div
-        className="absolute left-0 top-0 bottom-0 z-20 cursor-col-resize"
+        className="absolute left-0 top-0 bottom-0 z-20 cursor-col-resize touch-none"
         style={{ width: 6 }}
         onPointerDown={(e) => {
           e.stopPropagation();
@@ -1127,6 +1176,7 @@ function TaskBar({
         }}
         onPointerMove={onBarPointerMove}
         onPointerUp={onBarPointerUp}
+        onPointerCancel={onBarPointerCancel}
       />
 
       {/* Label inside bar */}
@@ -1135,9 +1185,9 @@ function TaskBar({
         {progress > 0 && ` (${progress}%)`}
       </span>
 
-      {/* Progress drag handle */}
+      {/* Progress drag handle — always visible on coarse pointers (no hover on touch) */}
       <div
-        className="absolute top-0 bottom-0 z-20 cursor-ew-resize opacity-0 group-hover/bar:opacity-100 transition-opacity"
+        className="absolute top-0 bottom-0 z-20 cursor-ew-resize touch-none opacity-0 group-hover/bar:opacity-100 pointer-coarse:opacity-100 transition-opacity"
         style={{
           left: `${progress}%`,
           width: 8,
@@ -1148,11 +1198,12 @@ function TaskBar({
         onPointerDown={(e) => onProgressPointerDown(e, task)}
         onPointerMove={onProgressPointerMove}
         onPointerUp={onProgressPointerUp}
+        onPointerCancel={onProgressPointerCancel}
       />
 
       {/* Right resize handle */}
       <div
-        className="absolute right-0 top-0 bottom-0 z-20 cursor-col-resize"
+        className="absolute right-0 top-0 bottom-0 z-20 cursor-col-resize touch-none"
         style={{ width: 6 }}
         onPointerDown={(e) => {
           e.stopPropagation();
@@ -1160,6 +1211,7 @@ function TaskBar({
         }}
         onPointerMove={onBarPointerMove}
         onPointerUp={onBarPointerUp}
+        onPointerCancel={onBarPointerCancel}
       />
     </div>
   );

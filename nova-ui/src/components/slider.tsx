@@ -67,7 +67,11 @@ export function Slider({
     setThumb(isRange ? index : 1, raw);
 
     const target = e.currentTarget;
-    target.setPointerCapture(e.pointerId);
+    try {
+      target.setPointerCapture(e.pointerId);
+    } catch {
+      // Some browsers throw if the pointer is already gone (e.g. after pointercancel).
+    }
     const move = (ev: globalThis.PointerEvent) => {
       const rect = trackRef.current!.getBoundingClientRect();
       const ratio = (ev.clientX - rect.left) / rect.width;
@@ -76,9 +80,11 @@ export function Slider({
     const up = () => {
       target.removeEventListener("pointermove", move as EventListener);
       target.removeEventListener("pointerup", up);
+      target.removeEventListener("pointercancel", up);
     };
     target.addEventListener("pointermove", move as EventListener);
     target.addEventListener("pointerup", up);
+    target.addEventListener("pointercancel", up);
   };
 
   const onThumbKeyDown = (e: KeyboardEvent<HTMLDivElement>, index: 0 | 1) => {
@@ -135,7 +141,7 @@ export function Slider({
           aria-disabled={disabled || undefined}
           onKeyDown={(e) => onThumbKeyDown(e, index)}
           className={cn(
-            "absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-accent bg-surface shadow-nova",
+            "absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 touch-none rounded-full border-2 border-accent bg-surface shadow-nova",
             "outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           )}
           style={{ left: `${pct(v)}%` }}

@@ -207,6 +207,15 @@
     -webkit-user-select: none;
   }
 
+  /* iOS Safari auto-zooms the page when focusing any input whose font-size
+     is under 16px. Our controls use text-sm (14px), so on touch devices we
+     bump form fields to 16px to keep the viewport stable on focus. */
+  @media (pointer: coarse) {
+    input, select, textarea, [contenteditable="true"] {
+      font-size: max(16px, 1em);
+    }
+  }
+
   /* ── Popover API fallback (iOS < 17, older Android Chrome) ──────────────
    * In browsers that don't support the Popover API, [popover] elements are
    * rendered as normal divs — always visible, always focusable, overlapping

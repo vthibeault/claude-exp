@@ -69,6 +69,8 @@ export function Carousel({
   // IntersectionObserver: track which slide is active
   // -----------------------------------------------------------------------
   useEffect(() => {
+    // Older browsers / non-DOM environments may not have IntersectionObserver.
+    if (typeof IntersectionObserver === "undefined") return;
     const container = scrollRef.current;
     if (!container) return;
 
@@ -172,8 +174,8 @@ export function Carousel({
   return (
     <div
       className={cn("relative overflow-hidden rounded-nova-lg", className)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onPointerEnter={(e) => { if (e.pointerType !== "touch") setIsHovered(true); }}
+      onPointerLeave={(e) => { if (e.pointerType !== "touch") setIsHovered(false); }}
       onFocus={() => setIsHovered(true)}
       onBlur={() => setIsHovered(false)}
     >

@@ -10,6 +10,7 @@ import { Clock } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   showPopover,
+  hidePopover,
   useAnchorPosition,
 } from "@/lib/use-anchor-position";
 
@@ -386,7 +387,7 @@ export function TimePickerField({
         id={popoverId}
         popover="auto"
         onToggle={(e) => {
-          if (e.newState === "closed" && open) setOpen(false);
+          if (e.newState === "closed" && open) { setOpen(false); hidePopover(floatingRef.current); }
           if (e.newState === "open" && !open) setOpen(true);
         }}
         className="nova-popover fixed inset-auto m-0 w-auto rounded-nova-lg border bg-surface p-3 text-sm text-foreground shadow-nova-lg"

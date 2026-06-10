@@ -126,7 +126,7 @@ export function Rating({
       aria-readonly={readOnly || undefined}
       tabIndex={isInteractive ? 0 : -1}
       onKeyDown={handleKeyDown}
-      onMouseLeave={() => isInteractive && setHoverValue(null)}
+      onPointerLeave={() => isInteractive && setHoverValue(null)}
       className={cn(
         "inline-flex items-center outline-none",
         iconGap[size],
@@ -138,9 +138,9 @@ export function Rating({
       {Array.from({ length: max }, (_, i) => (
         <span
           key={i}
-          onMouseMove={
+          onPointerMove={
             isInteractive
-              ? (e) => setHoverValue(getValueFromMouse(e, i))
+              ? (e) => { if (e.pointerType !== "touch") setHoverValue(getValueFromMouse(e, i)); }
               : undefined
           }
           onClick={

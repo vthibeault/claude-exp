@@ -469,7 +469,7 @@ export function CommandPalette() {
                     aria-selected={isActive}
                     data-index={globalIdx}
                     onClick={() => selectItem(cmd)}
-                    onMouseEnter={() => setActiveIndex(globalIdx)}
+                    onPointerEnter={(e: React.PointerEvent) => { if (e.pointerType !== "touch") setActiveIndex(globalIdx); }}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer select-none",
                       "text-sm transition-colors",

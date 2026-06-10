@@ -96,6 +96,12 @@ export { CHART_COLORS, niceTicks, scaleLinear } from "./components/charts/chart-
 export { useMeasure } from "./lib/use-measure";
 export { Heatmap } from "./components/charts/heatmap";
 export type { HeatmapProps, HeatmapCell } from "./components/charts/heatmap";
+export { ScatterChart } from "./components/charts/scatter-chart";
+export type { ScatterChartProps, ScatterSeries } from "./components/charts/scatter-chart";
+export { RadarChart } from "./components/charts/radar-chart";
+export type { RadarChartProps, RadarSeries } from "./components/charts/radar-chart";
+export { FunnelChart } from "./components/charts/funnel-chart";
+export type { FunnelChartProps, FunnelSlice } from "./components/charts/funnel-chart";
 
 // Data display
 export { VirtualTable } from "./components/virtual-table";
@@ -192,5 +198,9 @@ export type { TreeProps, TreeNode } from "./components/tree";
 // ThemeBuilder
 export { ThemeBuilder } from "./components/theme-builder";
 export type { ThemeBuilderProps } from "./components/theme-builder";
+
+// Gantt
+export { GanttChart, useGantt } from "./components/gantt";
+export type { GanttChartProps, GanttTask, GanttGroup, GanttViewMode } from "./components/gantt";
 
 import "./styles/nova.css";

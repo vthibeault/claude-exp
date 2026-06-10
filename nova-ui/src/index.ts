@@ -94,8 +94,12 @@ export { Sparkline } from "./components/charts/sparkline";
 export type { SparklineProps } from "./components/charts/sparkline";
 export { CHART_COLORS, niceTicks, scaleLinear } from "./components/charts/chart-utils";
 export { useMeasure } from "./lib/use-measure";
+export { Heatmap } from "./components/charts/heatmap";
+export type { HeatmapProps, HeatmapCell } from "./components/charts/heatmap";
 
 // Data display
+export { VirtualTable } from "./components/virtual-table";
+export type { VirtualTableProps } from "./components/virtual-table";
 export { DataTable, useDataTable } from "./components/data-table";
 export type { DataTableProps, DataTableColumn, UseDataTableOptions, SortDirection } from "./components/data-table";
 export { DataGrid } from "./components/data-grid";
@@ -130,6 +134,28 @@ export { PinInput } from "./components/pin-input";
 export type { PinInputProps } from "./components/pin-input";
 export { FileUpload } from "./components/file-upload";
 export type { FileUploadProps } from "./components/file-upload";
+export { DateRangePicker } from "./components/date-range-picker";
+export type { DateRangePickerProps, DateRange, DateRangePreset } from "./components/date-range-picker";
+export { TimePicker, TimePickerField } from "./components/time-picker";
+export type { TimePickerProps, TimePickerFieldProps, TimeValue } from "./components/time-picker";
+export { MentionInput, getMentionText } from "./components/mention-input";
+export type { MentionInputProps, MentionOption } from "./components/mention-input";
+export { MultiSelect } from "./components/multi-select";
+export type { MultiSelectProps, MultiSelectOption } from "./components/multi-select";
+export { ScrollArea, ScrollBar } from "./components/scroll-area";
+export type { ScrollAreaProps } from "./components/scroll-area";
+export { Rating } from "./components/rating";
+export type { RatingProps } from "./components/rating";
+export { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./components/collapsible";
+export type { CollapsibleProps } from "./components/collapsible";
+export { Carousel, CarouselItem } from "./components/carousel";
+export type { CarouselProps, CarouselItemProps } from "./components/carousel";
+export { Stepper, useStepper } from "./components/stepper";
+export type { StepperProps, StepConfig } from "./components/stepper";
+export { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbEllipsis } from "./components/breadcrumb";
+export type { BreadcrumbProps, BreadcrumbItemProps } from "./components/breadcrumb";
+export { HoverCard, HoverCardTrigger, HoverCardContent } from "./components/hover-card";
+export type { HoverCardProps, HoverCardContentProps } from "./components/hover-card";
 
 export { CommandPalette, CommandProvider, useCommand, useRegisterCommands } from "./components/command-palette";
 export type { CommandAction } from "./components/command-palette";
@@ -162,5 +188,9 @@ export type { ContextMenuProps, ContextMenuItem } from "./components/context-men
 // Tree
 export { Tree } from "./components/tree";
 export type { TreeProps, TreeNode } from "./components/tree";
+
+// ThemeBuilder
+export { ThemeBuilder } from "./components/theme-builder";
+export type { ThemeBuilderProps } from "./components/theme-builder";
 
 import "./styles/nova.css";

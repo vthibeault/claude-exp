@@ -223,7 +223,7 @@ export function useCommand() {
 export function useRegisterCommands(
   namespace: string,
   commands: CommandAction[],
-  deps: DependencyList,
+  deps: DependencyList = [],
 ) {
   const ctx = use(CommandContext);
   if (!ctx) throw new Error("useRegisterCommands must be used inside <CommandProvider>");

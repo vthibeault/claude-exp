@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Momentum — ADHD-friendly todos</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+</head>
+<body>
+  <div class="app">
+
+    <header class="topbar">
+      <div class="brand">⚡ Momentum</div>
+      <div class="stats">
+        <div class="stat" id="streak-stat" title="Days in a row with at least one task done">
+          <span class="stat-icon">🔥</span><span id="streak-count">0</span>
+        </div>
+        <div class="stat level-stat" title="Your level — earn XP by finishing tasks">
+          <span class="stat-icon">⭐</span><span id="level-label">Lv 1</span>
+          <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="space-tabs" role="tablist" aria-label="Spaces">
+      <button class="space-tab active" data-space="all" role="tab">Everything</button>
+      <button class="space-tab" data-space="personal" role="tab">🏠 Personal</button>
+      <button class="space-tab" data-space="work" role="tab">💼 Work</button>
+    </div>
+
+    <form id="capture-form" class="capture" autocomplete="off">
+      <input
+        id="capture-input"
+        type="text"
+        placeholder="Brain dump here… e.g. “email Sam #work !” or “water plants ~2m”"
+        aria-label="Add a task"
+      />
+      <button type="submit" class="capture-btn" aria-label="Add task">+</button>
+    </form>
+    <p class="capture-hints">
+      <code>#work</code> or <code>#personal</code> to file it ·
+      <code>!</code> = important ·
+      <code>~2m</code> = tiny task
+    </p>
+
+    <div class="mode-row">
+      <div class="mode-toggle" role="tablist" aria-label="View mode">
+        <button class="mode-btn active" data-mode="focus" role="tab">🎯 Focus</button>
+        <button class="mode-btn" data-mode="all" role="tab">📋 Everything</button>
+      </div>
+      <button id="pick-btn" class="pick-btn" title="Can't decide? Let the app pick one task for you">
+        🎲 Pick for me
+      </button>
+    </div>
+
+    <p class="focus-note" id="focus-note">Just these three. Everything else can wait.</p>
+
+    <main>
+      <ul id="task-list" class="task-list" aria-live="polite"></ul>
+
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-emoji" id="empty-emoji">🌤️</div>
+        <p class="empty-title" id="empty-title">All clear!</p>
+        <p class="empty-sub" id="empty-sub">Add one small thing above — starting is the whole game.</p>
+      </div>
+
+      <details class="done-section" id="done-section">
+        <summary>✅ Done today (<span id="done-count">0</span>)</summary>
+        <ul id="done-list" class="task-list done-list"></ul>
+      </details>
+    </main>
+
+    <div id="toast" class="toast" role="status"></div>
+    <canvas id="confetti-canvas"></canvas>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
